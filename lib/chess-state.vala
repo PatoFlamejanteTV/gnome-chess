@@ -595,6 +595,76 @@ public class ChessState : Object
         return CheckState.NONE;
     }
 
+    public bool get_attacked_squares (ChessPlayer player, out bool[] attacked_map)
+    {
+        attacked_map = new bool[64];
+        bool found = false;
+
+        /* Check all squares if they can be attacked by any piece of the player */
+        for (int start = 0; start < 64; start++)
+        {
+            var p = board[start];
+            if (p == null || p.player != player)
+                continue;
+
+            /* Optimization: For sliding pieces, we can just trace rays.
+             * But for now, let's reuse move_with_coords or similar logic.
+             * move_with_coords is heavy because it checks validity of full move.
+             * However, "attacking" a square is slightly different than "moving" to it
+             * (e.g. pawns attack diagonally even if empty).
+             */
+
+             /* Let's iterate over all target squares. This is slow (16 * 64 checks),
+              * but board is small.
+              */
+             for (int end = 0; end < 64; end++)
+             {
+                 /* Optimization: Skip if already marked? No, maybe we want count, but boolean is enough. */
+                 if (attacked_map[end])
+                    continue;
+
+                 if (p.type == PieceType.PAWN)
+                 {
+                      /* Pawns attack diagonals */
+                      int r0 = get_rank(start);
+                      int f0 = get_file(start);
+                      int r1 = get_rank(end);
+                      int f1 = get_file(end);
+
+                      int direction = (player.color == Color.WHITE) ? 1 : -1;
+                      if (r1 == r0 + direction && (f1 == f0 - 1 || f1 == f0 + 1))
+                      {
+                          attacked_map[end] = true;
+                          found = true;
+                      }
+                 }
+                 else
+                 {
+                     /* For other pieces, use move_with_coords but ignore checks and victims.
+                      * We need to pass a dummy victim if the square is empty to trick move_with_coords
+                      * if it requires a victim? No, move_with_coords handles empty squares.
+                      * But wait, move_with_coords checks if `victim` is own piece.
+                      * Attacking own piece is also "controlling" the square (defending it).
+                      * But usually "attacked squares" means squares threatened.
+                      * Let's say we only care about squares where we can capture or move to.
+                      * But we want to show "attacked squares" by opponent, which includes squares occupied by us.
+                      */
+
+                     /* We use move_with_coords with test_check=false */
+                     if (move_with_coords (player,
+                                           get_rank (start), get_file (start),
+                                           get_rank (end), get_file (end),
+                                           PieceType.QUEEN, false, false))
+                     {
+                         attacked_map[end] = true;
+                         found = true;
+                     }
+                 }
+             }
+        }
+        return found;
+    }
+
     public bool get_positions_threatening_king (ChessPlayer player, out int[] rank, out int[] file)
     {
         var opponent = player.color == Color.WHITE ? players[Color.BLACK] : players[Color.WHITE];

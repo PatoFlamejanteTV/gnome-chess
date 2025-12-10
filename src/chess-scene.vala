@@ -201,6 +201,20 @@ public class ChessScene : Object
         set { _move_format = value; changed (); }
     }
 
+    private bool _blindfold_mode = false;
+    public bool blindfold_mode
+    {
+         get { return _blindfold_mode; }
+         set { _blindfold_mode = value; changed (); }
+    }
+
+    private bool _show_attacked_squares = false;
+    public bool show_attacked_squares
+    {
+         get { return _show_attacked_squares; }
+         set { _show_attacked_squares = value; changed (); }
+    }
+
     public ChessScene ()
     {
         animation_timer = new Timer ();

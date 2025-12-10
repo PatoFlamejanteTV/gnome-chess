@@ -126,6 +126,13 @@ public class ChessView : Gtk.DrawingArea
         c.rectangle (-board_size, -board_size, board_size * 2, board_size * 2);
         c.fill ();
 
+        bool[] attacked_squares = null;
+        if (scene.show_attacked_squares && !scene.animating && scene.game != null)
+        {
+            // Calculate attacked squares by the opponent
+            scene.game.current_state.get_attacked_squares (scene.game.opponent, out attacked_squares);
+        }
+
         for (int file = 0; file < 8; file++)
         {
             for (int rank = 0; rank < 8; rank++)
@@ -145,6 +152,14 @@ public class ChessView : Gtk.DrawingArea
                 if (!scene.animating && scene.game.is_piece_at_position_threatening_check (rank, file))
                     c.set_source_rgb (0xd4/255.0, 0x97/255.0, 0x95/255.0);
                 
+                if (attacked_squares != null && attacked_squares[rank * 8 + file])
+                {
+                    // Tint red for attacked squares
+                    c.fill ();
+                    c.rectangle (x, y, square_size, square_size);
+                    c.set_source_rgba (1.0, 0.0, 0.0, 0.2);
+                }
+
                 c.fill ();
             }
         }
@@ -235,19 +250,22 @@ public class ChessView : Gtk.DrawingArea
         }
 
         /* Draw the pieces */
-        foreach (var model in scene.pieces)
+        if (!scene.blindfold_mode)
         {
-            c.save ();
-            c.translate ((model.x - 4) * square_size, (3 - model.y) * square_size);
-            c.translate (square_size / 2, square_size / 2);
-            c.rotate (-Math.PI * scene.board_angle / 180.0);
+            foreach (var model in scene.pieces)
+            {
+                c.save ();
+                c.translate ((model.x - 4) * square_size, (3 - model.y) * square_size);
+                c.translate (square_size / 2, square_size / 2);
+                c.rotate (-Math.PI * scene.board_angle / 180.0);
 
-            draw_piece (c,
-                        model.is_selected ? selected_model_surface : model_surface,
-						model.is_selected ? selected_square_size : square_size,
-                        model.piece, model.under_threat ? 0.8 : 1.0);
+                draw_piece (c,
+                            model.is_selected ? selected_model_surface : model_surface,
+                            model.is_selected ? selected_square_size : square_size,
+                            model.piece, model.under_threat ? 0.8 : 1.0);
 
-            c.restore ();
+                c.restore ();
+            }
         }
 
         /* Draw shadow piece on squares that can be moved to */

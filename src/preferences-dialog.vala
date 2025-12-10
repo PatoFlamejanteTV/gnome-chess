@@ -22,12 +22,18 @@ public class PreferencesDialog : Adw.PreferencesDialog
     private unowned Adw.ComboRow piece_style_combo;
     [GtkChild]
     private unowned Gtk.Switch board_numbering_switch;
+    [GtkChild]
+    private unowned Gtk.Switch blindfold_mode_switch;
+    [GtkChild]
+    private unowned Gtk.Switch show_attacked_squares_switch;
 
     public PreferencesDialog (Preferences preferences)
     {
         this.preferences = preferences;
 
         preferences.bind_property ("show-board-numbering", board_numbering_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
+        preferences.bind_property ("blindfold-mode", blindfold_mode_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
+        preferences.bind_property ("show-attacked-squares", show_attacked_squares_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("piece-style", piece_style_combo, "selected", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("move-format", move_format_combo, "selected", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("board-orientation", board_orientation_combo, "selected", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);

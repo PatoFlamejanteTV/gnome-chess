@@ -58,6 +58,16 @@
       <summary>A flag to enable board numbering</summary>
       <description>A flag to enable board numbering</description>
     </key>
+    <key name="blindfold-mode" type="b">
+      <default>false</default>
+      <summary>A flag to enable blindfold mode</summary>
+      <description>A flag to enable blindfold mode</description>
+    </key>
+    <key name="show-attacked-squares" type="b">
+      <default>false</default>
+      <summary>A flag to enable attacked squares highlighting</summary>
+      <description>A flag to enable attacked squares highlighting</description>
+    </key>
     <key name="save-directory" type="s">
       <default>''</default>
       <summary>The directory to open the save game dialog in</summary>

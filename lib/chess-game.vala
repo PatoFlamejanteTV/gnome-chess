@@ -372,7 +372,8 @@ public class ChessGame : Object
 
     public bool is_king_under_attack_at_position (int rank, int file)
     {
-        if (!current_state.is_in_check (current_player))
+        /* Optimization: Use check_state which is pre-calculated */
+        if (current_state.check_state == CheckState.NONE)
             return false;
 
         var piece = get_piece (rank, file);

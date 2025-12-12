@@ -127,10 +127,26 @@ public class ChessView : Gtk.DrawingArea
         c.fill ();
 
         bool[] attacked_squares = null;
-        if (scene.show_attacked_squares && !scene.animating && scene.game != null)
+        bool in_check = false;
+        int[] threatening_ranks = null;
+        int[] threatening_files = null;
+
+        if (!scene.animating && scene.game != null)
         {
-            // Calculate attacked squares by the opponent
-            scene.game.current_state.get_attacked_squares (scene.game.opponent, out attacked_squares);
+            if (scene.show_attacked_squares)
+            {
+                // Calculate attacked squares by the opponent
+                scene.game.current_state.get_attacked_squares (scene.game.opponent, out attacked_squares);
+            }
+
+            // Optimization: Pre-calculate check status and threatening pieces once per frame
+            // instead of calling is_king_under_attack_at_position and is_piece_at_position_threatening_check
+            // 64 times inside the loop.
+            if (scene.game.current_state.check_state != CheckState.NONE)
+            {
+                in_check = true;
+                scene.game.current_state.get_positions_threatening_king (scene.game.current_player, out threatening_ranks, out threatening_files);
+            }
         }
 
         for (int file = 0; file < 8; file++)
@@ -146,10 +162,32 @@ public class ChessView : Gtk.DrawingArea
                 else
                     c.set_source_rgb (0xee/255.0, 0xee/255.0, 0xec/255.0);
 
-                if (!scene.animating && scene.game.is_king_under_attack_at_position (rank, file))
-                    c.set_source_rgb (0xd4/255.0, 0x97/255.0, 0x95/255.0);
-    
-                if (!scene.animating && scene.game.is_piece_at_position_threatening_check (rank, file))
+                bool highlight_red = false;
+                if (in_check)
+                {
+                    // Check if King
+                    // Optimization: access board directly to avoid O(moves) get_piece() call in get_piece
+                    var state = scene.game.current_state;
+                    var piece = state.board[state.get_index (rank, file)];
+                    if (piece != null && piece.type == PieceType.KING && piece.player == scene.game.current_player)
+                    {
+                        highlight_red = true;
+                    }
+                    else
+                    {
+                        // Check threatening pieces
+                        for (int i = 0; i < threatening_ranks.length; i++)
+                        {
+                            if (threatening_ranks[i] == rank && threatening_files[i] == file)
+                            {
+                                highlight_red = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (highlight_red)
                     c.set_source_rgb (0xd4/255.0, 0x97/255.0, 0x95/255.0);
                 
                 if (attacked_squares != null && attacked_squares[rank * 8 + file])

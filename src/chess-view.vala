@@ -173,7 +173,7 @@ public class ChessView : Gtk.DrawingArea
                     {
                         highlight_red = true;
                     }
-                    else if (threatening_ranks != null)
+                    else
                     {
                         // Check threatening pieces
                         for (int i = 0; i < threatening_ranks.length; i++)

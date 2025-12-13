@@ -331,6 +331,8 @@ public class ChessGame : Object
         if (move_number < 0)
             move_number += len;
 
+        if (move_number < 0 || move_number >= len)
+            return null;
         var state = move_stack.nth_data (len - move_number - 1);
 
         return state.board[state.get_index (rank, file)];

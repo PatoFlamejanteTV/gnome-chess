@@ -323,10 +323,20 @@ public class ChessGame : Object
 
     public ChessPiece? get_piece (int rank, int file, int move_number = -1)
     {
-        if (move_number < 0)
-            move_number += (int) move_stack.length ();
+        ChessState state;
 
-        var state = move_stack.nth_data (move_stack.length () - move_number - 1);
+        /* Optimization: Most calls are for the current state (move_number = -1) */
+        if (move_number == -1)
+        {
+            state = current_state;
+        }
+        else
+        {
+            if (move_number < 0)
+                move_number += (int) move_stack.length ();
+
+            state = move_stack.nth_data (move_stack.length () - move_number - 1);
+        }
 
         return state.board[state.get_index (rank, file)];
     }

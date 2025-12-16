@@ -42,6 +42,7 @@ public class ChessGame : Object
     public ChessResult result;
     public ChessRule rule;
     public List<ChessState> move_stack;
+    private uint _n_moves = 0;
 
     private int hold_count = 0;
 
@@ -94,6 +95,7 @@ public class ChessGame : Object
     {
         is_started = false;
         move_stack.prepend (new ChessState (fen));
+        _n_moves++;
         result = ChessResult.IN_PROGRESS;
 
         if (moves != null)
@@ -146,6 +148,7 @@ public class ChessGame : Object
             return true;
 
         move_stack.prepend (state);
+        _n_moves++;
         if (state.last_move.victim != null)
             state.last_move.victim.died ();
         state.last_move.piece.moved ();
@@ -218,6 +221,7 @@ public class ChessGame : Object
 
         /* Pop off the move state */
         move_stack.remove_link (move_stack);
+        _n_moves--;
 
         /* Restart the game if undo was done after end of the game */
         if (result != ChessResult.IN_PROGRESS)
@@ -333,9 +337,9 @@ public class ChessGame : Object
         else
         {
             if (move_number < 0)
-                move_number += (int) move_stack.length ();
+                move_number += (int) _n_moves;
 
-            state = move_stack.nth_data (move_stack.length () - move_number - 1);
+            state = move_stack.nth_data (_n_moves - move_number - 1);
         }
 
         return state.board[state.get_index (rank, file)];
@@ -343,7 +347,7 @@ public class ChessGame : Object
 
     public uint n_moves
     {
-        get { return move_stack.length () - 1; }
+        get { return _n_moves - 1; }
     }
 
     public void pause (bool show_overlay = true)

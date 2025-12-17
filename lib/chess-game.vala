@@ -43,6 +43,10 @@ public class ChessGame : Object
     public ChessRule rule;
     public List<ChessState> move_stack;
 
+    /* Cached number of moves in the stack. Used to avoid O(N) length() calls.
+     * Note: This must be kept in sync with move_stack modifications.
+     * move_stack length is always _n_moves + 1 (for the initial state). */
+    private uint _n_moves = 0;
     private int hold_count = 0;
 
     public const string STANDARD_SETUP = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -146,6 +150,7 @@ public class ChessGame : Object
             return true;
 
         move_stack.prepend (state);
+        _n_moves++;
         if (state.last_move.victim != null)
             state.last_move.victim.died ();
         state.last_move.piece.moved ();
@@ -218,6 +223,7 @@ public class ChessGame : Object
 
         /* Pop off the move state */
         move_stack.remove_link (move_stack);
+        _n_moves--;
 
         /* Restart the game if undo was done after end of the game */
         if (result != ChessResult.IN_PROGRESS)
@@ -332,10 +338,15 @@ public class ChessGame : Object
         }
         else
         {
+            /* If move_number is negative, it's relative to the end.
+             * Original: move_number += length().
+             * Optimized: move_number += _n_moves + 1. */
             if (move_number < 0)
-                move_number += (int) move_stack.length ();
+                move_number += (int) (_n_moves + 1);
 
-            state = move_stack.nth_data (move_stack.length () - move_number - 1);
+            /* Original: nth_data (length() - move_number - 1).
+             * Optimized: nth_data ((_n_moves + 1) - move_number - 1) => nth_data (_n_moves - move_number). */
+            state = move_stack.nth_data ((uint) _n_moves - move_number);
         }
 
         return state.board[state.get_index (rank, file)];
@@ -343,7 +354,7 @@ public class ChessGame : Object
 
     public uint n_moves
     {
-        get { return move_stack.length () - 1; }
+        get { return _n_moves; }
     }
 
     public void pause (bool show_overlay = true)

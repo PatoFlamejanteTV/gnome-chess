@@ -283,10 +283,14 @@ public class ChessState : Object
                                   PieceType promotion_type = PieceType.QUEEN,
                                   bool apply = true, bool test_check = true)
     {
-        // FIXME: Make this use indexes to be faster
-        var start = get_index (r0, f0);
-        var end = get_index (r1, f1);
+        return move_with_index (player, get_index (r0, f0), get_index (r1, f1), promotion_type, apply, test_check);
+    }
 
+    public bool move_with_index (ChessPlayer player,
+                                 int start, int end,
+                                 PieceType promotion_type = PieceType.QUEEN,
+                                 bool apply = true, bool test_check = true)
+    {
         var color = player.color;
         var opponent_color = color == Color.WHITE ? Color.BLACK : Color.WHITE;
 
@@ -313,6 +317,11 @@ public class ChessState : Object
         /* Can't take own pieces */
         if (victim != null && victim.player == player)
             return false;
+
+        var r0 = get_rank (start);
+        var f0 = get_file (start);
+        var r1 = get_rank (end);
+        var f1 = get_file (end);
 
         /* Check special moves */
         int rook_start = -1, rook_end = -1;
@@ -383,7 +392,7 @@ public class ChessState : Object
                     return false;
 
                 /* Square moved across can't be under attack */
-                if (!move_with_coords (player, r0, f0, get_rank (rook_end), get_file (rook_end), PieceType.QUEEN, false, true))
+                if (!move_with_index (player, start, rook_end, PieceType.QUEEN, false, true))
                     return false;
             }
             break;
@@ -411,7 +420,7 @@ public class ChessState : Object
                 /* If more than one piece can move then the rank and/or file are ambiguous */
                 var r = get_rank (i);
                 var f = get_file (i);
-                if (move_with_coords (player, r, f, r1, f1, PieceType.QUEEN, false))
+                if (move_with_index (player, i, end, PieceType.QUEEN, false))
                 {
                     if (r != r0)
                         ambiguous_rank = true;
@@ -650,11 +659,8 @@ public class ChessState : Object
                       * But we want to show "attacked squares" by opponent, which includes squares occupied by us.
                       */
 
-                     /* We use move_with_coords with test_check=false */
-                     if (move_with_coords (player,
-                                           get_rank (start), get_file (start),
-                                           get_rank (end), get_file (end),
-                                           PieceType.QUEEN, false, false))
+                     /* We use move_with_index with test_check=false */
+                     if (move_with_index (player, start, end, PieceType.QUEEN, false, false))
                      {
                          attacked_map[end] = true;
                          found = true;
@@ -681,10 +687,7 @@ public class ChessState : Object
                 int[] files = {};
                 for (int start = 0; start < 64; start++)
                 {
-                    if (move_with_coords (opponent,
-                                          get_rank (start), get_file (start),
-                                          get_rank (king_index), get_file (king_index),
-                                          PieceType.QUEEN, false, false))
+                    if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
                     {
                         ranks += get_rank (start);
                         files += get_file (start);
@@ -721,10 +724,7 @@ public class ChessState : Object
             {
                 for (int end = 0; end < 64; end++)
                 {
-                    if (move_with_coords (player,
-                                          get_rank (piece_index), get_file (piece_index),
-                                          get_rank (end), get_file (end),
-                                          PieceType.QUEEN, false, true))
+                    if (move_with_index (player, piece_index, end, PieceType.QUEEN, false, true))
                         return false;
                 }
             }
@@ -747,10 +747,7 @@ public class ChessState : Object
                 /* See if can move anywhere */
                 for (int end = 0; end < 64; end++)
                 {
-                    if (move_with_coords (player,
-                                          get_rank (start), get_file (start),
-                                          get_rank (end), get_file (end),
-                                          PieceType.QUEEN, false, true))
+                    if (move_with_index (player, start, end, PieceType.QUEEN, false, true))
                         return true;
                 }
             }

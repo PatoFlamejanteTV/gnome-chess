@@ -252,10 +252,20 @@ public class ChessGame : Object
     private int state_repeated_times (ChessState s1)
     {
         var count = 1;
+        var limit = s1.halfmove_clock;
+        var checked = 0;
 
         foreach (var s2 in move_stack)
         {
-            if (s1 != s2 && s1.equals (s2))
+            if (s1 == s2)
+                continue;
+
+            /* Optimization: No need to search beyond the last irreversible move */
+            if (checked >= limit)
+                break;
+            checked++;
+
+            if (s1.equals (s2))
                 count++;
         }
 

@@ -312,6 +312,9 @@ public class ChessScene : Object
         var board_changed = false;
         var need_animation = false;
         List<ChessModel> new_pieces = null;
+
+        var state = game.get_state (move_number);
+
         for (int rank = 0; rank < 8; rank++)
         {
             for (int file = 0; file < 8; file++)
@@ -322,7 +325,8 @@ public class ChessScene : Object
                     can_move = true;
                 _can_move[rank * 8 + file] = can_move;
 
-                var piece = game.get_piece (rank, file, move_number);
+                /* Optimization: Get piece directly from state to avoid O(moves) lookup in loop */
+                var piece = state.board[state.get_index (rank, file)];
                 if (piece == null)
                     continue;
                 var model = find_model (piece);

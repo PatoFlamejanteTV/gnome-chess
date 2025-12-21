@@ -337,28 +337,26 @@ public class ChessGame : Object
             assert_not_reached ();
     }
 
-    public ChessPiece? get_piece (int rank, int file, int move_number = -1)
+    public ChessState get_state (int move_number = -1)
     {
-        ChessState state;
-
         /* Optimization: Most calls are for the current state (move_number = -1) */
         if (move_number == -1)
-        {
-            state = current_state;
-        }
-        else
-        {
-            /* If move_number is negative, it's relative to the end.
-             * Original: move_number += length().
-             * Optimized: move_number += _n_moves + 1. */
-            if (move_number < 0)
-                move_number += (int) (_n_moves + 1);
+            return current_state;
 
-            /* Original: nth_data (length() - move_number - 1).
-             * Optimized: nth_data ((_n_moves + 1) - move_number - 1) => nth_data (_n_moves - move_number). */
-            state = move_stack.nth_data ((uint) _n_moves - move_number);
-        }
+        /* If move_number is negative, it's relative to the end.
+         * Original: move_number += length().
+         * Optimized: move_number += _n_moves + 1. */
+        if (move_number < 0)
+            move_number += (int) (_n_moves + 1);
 
+        /* Original: nth_data (length() - move_number - 1).
+         * Optimized: nth_data ((_n_moves + 1) - move_number - 1) => nth_data (_n_moves - move_number). */
+        return move_stack.nth_data ((uint) _n_moves - move_number);
+    }
+
+    public ChessPiece? get_piece (int rank, int file, int move_number = -1)
+    {
+        var state = get_state (move_number);
         return state.board[state.get_index (rank, file)];
     }
 

@@ -31,6 +31,7 @@ public class ChessState : Object
     public int en_passant_index = -1;
     public CheckState check_state;
     public int halfmove_clock;
+    public int king_locations[2] = {-1, -1};
 
     public ChessPiece board[64];
     public ChessMove? last_move = null;
@@ -80,6 +81,10 @@ public class ChessState : Object
                 board[index] = piece;
                 uint64 mask = BitBoard.set_location_masks[index];
                 piece_masks[color] |= mask;
+
+                if (type == PieceType.KING)
+                    king_locations[color] = index;
+
                 file++;
             }
         }
@@ -144,6 +149,8 @@ public class ChessState : Object
         state.can_castle_queenside[Color.BLACK] = can_castle_queenside[Color.BLACK];
         state.en_passant_index = en_passant_index;
         state.check_state = check_state;
+        state.king_locations[Color.WHITE] = king_locations[Color.WHITE];
+        state.king_locations[Color.BLACK] = king_locations[Color.BLACK];
         if (last_move != null)
             state.last_move = last_move.copy ();
         for (int i = 0; i < 64; i++)
@@ -438,6 +445,7 @@ public class ChessState : Object
         var old_black_can_castle_queenside = can_castle_queenside[Color.BLACK];
         var old_en_passant_index = en_passant_index;
         var old_halfmove_clock = halfmove_clock;
+        var old_king_location = king_locations[color];
 
         /* Update board */
         board[start] = null;
@@ -463,6 +471,9 @@ public class ChessState : Object
             board[rook_end] = rook;
             piece_masks[color] |= BitBoard.set_location_masks[rook_end];
         }
+
+        if (piece.type == PieceType.KING)
+            king_locations[color] = end;
 
         /* Can't castle once king has moved */
         if (piece.type == PieceType.KING)
@@ -533,6 +544,7 @@ public class ChessState : Object
             can_castle_queenside[Color.BLACK] = old_black_can_castle_queenside;
             en_passant_index = old_en_passant_index;
             halfmove_clock = old_halfmove_clock;
+            king_locations[color] = old_king_location;
 
             return result;
         }
@@ -677,29 +689,27 @@ public class ChessState : Object
         bool found = false;
 
         /* Is in check if any piece can take the king */
-        for (int king_index = 0; king_index < 64; king_index++)
+        /* Optimization: Use cached king location instead of iterating the board */
+        var king_index = king_locations[player.color];
+        if (king_index != -1)
         {
-            var p = board[king_index];
-            if (p != null && p.player == player && p.type == PieceType.KING)
+            /* See if any enemy pieces can take the king */
+            int[] ranks = {};
+            int[] files = {};
+            for (int start = 0; start < 64; start++)
             {
-                /* See if any enemy pieces can take the king */
-                int[] ranks = {};
-                int[] files = {};
-                for (int start = 0; start < 64; start++)
+                if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
                 {
-                    if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
-                    {
-                        ranks += get_rank (start);
-                        files += get_file (start);
-                        found = true;
-                    }
+                    ranks += get_rank (start);
+                    files += get_file (start);
+                    found = true;
                 }
-
-                rank = ranks;
-                file = files;
-
-                return found;
             }
+
+            rank = ranks;
+            file = files;
+
+            return found;
         }
 
         /* There is no King. (Must be a test rather than a real game!) */

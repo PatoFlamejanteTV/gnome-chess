@@ -322,15 +322,25 @@ public class ChessScene : Object
 
         var state = game.get_state (move_number);
 
+        /* Optimization: Pre-calculate valid moves */
+        for (int i = 0; i < 64; i++)
+            _can_move[i] = false;
+
+        if (selected_rank >= 0 && move_number == -1)
+        {
+            var start_index = selected_rank * 8 + selected_file;
+            for (int i = 0; i < 64; i++)
+            {
+                if (game.current_state.move_with_index (game.current_player, start_index, i, PieceType.QUEEN, false))
+                    _can_move[i] = true;
+            }
+        }
+
         for (int rank = 0; rank < 8; rank++)
         {
             for (int file = 0; file < 8; file++)
             {
-                var can_move = false;
-                if (selected_rank >= 0 && move_number == -1 &&
-                    game.current_player.move_with_coords (selected_rank, selected_file, rank, file, false))
-                    can_move = true;
-                _can_move[rank * 8 + file] = can_move;
+                var can_move = _can_move[rank * 8 + file];
 
                 /* Optimization: Get piece directly from state to avoid O(moves) lookup in loop */
                 var piece = state.board[state.get_index (rank, file)];

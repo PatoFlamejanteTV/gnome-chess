@@ -41,6 +41,9 @@ public class ChessState : Object
     /* Bitmap of all the pieces */
     public uint64 piece_masks[2];
 
+    /* Locations of the kings */
+    public int king_locations[2];
+
     private ChessState.empty ()
     {
     }
@@ -50,6 +53,8 @@ public class ChessState : Object
     {
         players[Color.WHITE] = new ChessPlayer (Color.WHITE);
         players[Color.BLACK] = new ChessPlayer (Color.BLACK);
+        king_locations[Color.WHITE] = -1;
+        king_locations[Color.BLACK] = -1;
         for (int i = 0; i < 64; i++)
             board[i] = null;
 
@@ -81,6 +86,8 @@ public class ChessState : Object
                 int index = get_index (rank, file);
                 ChessPiece piece = new ChessPiece (players[color], type);
                 board[index] = piece;
+                if (type == PieceType.KING)
+                    king_locations[color] = index;
                 uint64 mask = BitBoard.set_location_masks[index];
                 piece_masks[color] |= mask;
                 file++;
@@ -163,6 +170,8 @@ public class ChessState : Object
             state.board[i] = board[i];
         state.piece_masks[Color.WHITE] = piece_masks[Color.WHITE];
         state.piece_masks[Color.BLACK] = piece_masks[Color.BLACK];
+        state.king_locations[Color.WHITE] = king_locations[Color.WHITE];
+        state.king_locations[Color.BLACK] = king_locations[Color.BLACK];
         state.halfmove_clock = halfmove_clock;
 
         return state;
@@ -620,6 +629,7 @@ public class ChessState : Object
         var old_black_can_castle_queenside = can_castle_queenside[Color.BLACK];
         var old_en_passant_index = en_passant_index;
         var old_halfmove_clock = halfmove_clock;
+        var old_king_location = king_locations[color];
 
         /* Update board */
         board[start] = null;
@@ -649,6 +659,7 @@ public class ChessState : Object
         /* Can't castle once king has moved */
         if (piece.type == PieceType.KING)
         {
+            king_locations[color] = end;
             can_castle_kingside[color] = false;
             can_castle_queenside[color] = false;
         }
@@ -715,6 +726,8 @@ public class ChessState : Object
             can_castle_queenside[Color.BLACK] = old_black_can_castle_queenside;
             en_passant_index = old_en_passant_index;
             halfmove_clock = old_halfmove_clock;
+            if (piece.type == PieceType.KING)
+                king_locations[color] = old_king_location;
 
             return result;
         }
@@ -859,29 +872,30 @@ public class ChessState : Object
         bool found = false;
 
         /* Is in check if any piece can take the king */
-        for (int king_index = 0; king_index < 64; king_index++)
+        int king_index = king_locations[player.color];
+        if (king_index != -1)
         {
-            var p = board[king_index];
-            if (p != null && p.player == player && p.type == PieceType.KING)
+            /* See if any enemy pieces can take the king */
+            int[] ranks = {};
+            int[] files = {};
+            for (int start = 0; start < 64; start++)
             {
-                /* See if any enemy pieces can take the king */
-                int[] ranks = {};
-                int[] files = {};
-                for (int start = 0; start < 64; start++)
+                var piece = board[start];
+                if (piece == null || piece.player != opponent)
+                    continue;
+
+                if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
                 {
-                    if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
-                    {
-                        ranks += get_rank (start);
-                        files += get_file (start);
-                        found = true;
-                    }
+                    ranks += get_rank (start);
+                    files += get_file (start);
+                    found = true;
                 }
-
-                rank = ranks;
-                file = files;
-
-                return found;
             }
+
+            rank = ranks;
+            file = files;
+
+            return found;
         }
 
         /* There is no King. (Must be a test rather than a real game!) */

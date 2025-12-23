@@ -33,6 +33,7 @@ public enum ChessRule
     RESIGN,
     ABANDONMENT,
     DEATH,
+    KING_OF_THE_HILL,
     BUG
 }
 
@@ -41,6 +42,7 @@ public class ChessGame : Object
     public bool is_started;
     public ChessResult result;
     public ChessRule rule;
+    public bool king_of_the_hill;
     public List<ChessState> move_stack;
 
     /* Cached number of moves in the stack. Used to avoid O(N) length() calls.
@@ -94,8 +96,9 @@ public class ChessGame : Object
         }
     }
 
-    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null) throws PGNError
+    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false) throws PGNError
     {
+        this.king_of_the_hill = king_of_the_hill;
         is_started = false;
         move_stack.prepend (new ChessState (fen));
         result = ChessResult.IN_PROGRESS;
@@ -190,6 +193,15 @@ public class ChessGame : Object
         if (result != ChessResult.IN_PROGRESS)
         {
             stop (result, rule);
+            return;
+        }
+
+        if (king_of_the_hill && is_king_on_hill (opponent))
+        {
+            if (opponent.color == Color.WHITE)
+                stop (ChessResult.WHITE_WON, ChessRule.KING_OF_THE_HILL);
+            else
+                stop (ChessResult.BLACK_WON, ChessRule.KING_OF_THE_HILL);
             return;
         }
 
@@ -432,6 +444,17 @@ public class ChessGame : Object
             }
         }
 
+        return false;
+    }
+    public bool is_king_on_hill (ChessPlayer player)
+    {
+        var hill_indices = new int[] { 27, 28, 35, 36 };
+        foreach (var index in hill_indices)
+        {
+            var piece = current_state.board[index];
+            if (piece != null && piece.type == PieceType.KING && piece.player == player)
+                return true;
+        }
         return false;
     }
 }

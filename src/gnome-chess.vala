@@ -287,7 +287,8 @@ Copyright © 2015–2016 Sahil Sareen""";
 
         try
         {
-            game = new ChessGame (fen, moves);
+            var is_koth = pgn_game.tags.lookup ("Variant") == "King of the Hill";
+            game = new ChessGame (fen, moves, is_koth);
         }
         catch (Error e)
         {
@@ -898,6 +899,14 @@ Copyright © 2015–2016 Sahil Sareen""";
         string why = "";
         switch (game.rule)
         {
+        case ChessRule.KING_OF_THE_HILL:
+            if (game.result == ChessResult.WHITE_WON)
+                why = _("White's King has reached the center.");
+            else if (game.result == ChessResult.BLACK_WON)
+                why = _("Black's King has reached the center.");
+            else
+                assert_not_reached ();
+            break;
         case ChessRule.CHECKMATE:
             if (game.result == ChessResult.WHITE_WON)
                 /* Game status when Black is checkmated */
@@ -1492,6 +1501,9 @@ Copyright © 2015–2016 Sahil Sareen""";
 
             settings.set_string (LAST_PLAYED_AS_SETTINGS_KEY, play_as);
         }
+
+        if (settings.get_boolean (KING_OF_THE_HILL_SETTINGS_KEY))
+           pgn_game.tags.insert ("Variant", "King of the Hill");
 
         start_game ();
     }

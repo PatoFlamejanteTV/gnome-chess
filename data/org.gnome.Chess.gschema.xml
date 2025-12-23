@@ -128,5 +128,10 @@
       <summary>Difficulty of the opponent chess engine</summary>
       <description>Difficulty of the opponent chess engine</description>
     </key>
+    <key name="king-of-the-hill" type="b">
+      <default>false</default>
+      <summary>A flag to enable King of the Hill mode</summary>
+      <description>A flag to enable King of the Hill mode</description>
+    </key>
   </schema>
 </schemalist>

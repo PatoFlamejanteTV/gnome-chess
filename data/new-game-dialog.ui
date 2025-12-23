@@ -72,6 +72,18 @@
                     </property>
                   </object>
                 </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_King of the Hill</property>
+                    <property name="use-underline">true</property>
+                    <property name="activatable_widget">king_of_the_hill_switch</property>
+                    <child>
+                       <object class="GtkSwitch" id="king_of_the_hill_switch">
+                        <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>

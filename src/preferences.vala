@@ -26,6 +26,7 @@ public const string PLAY_AS_SETTINGS_KEY = "play-as";
 public const string LAST_PLAYED_AS_SETTINGS_KEY = "last-played-as";
 public const string OPPONENT_SETTINGS_KEY = "opponent";
 public const string DIFFICULTY_SETTINGS_KEY = "difficulty";
+public const string KING_OF_THE_HILL_SETTINGS_KEY = "king-of-the-hill";
 
 public class Preferences : Object
 {
@@ -42,6 +43,7 @@ public class Preferences : Object
     public Opponent opponent { get; set; }
     public PlayAs play_as { get; set; }
     public Difficulty difficulty { get; set; }
+    public bool king_of_the_hill { get; set; }
 
     private bool syncing_time_limit = false;
     public TimeLimit? time_limit { get; set; }
@@ -54,6 +56,7 @@ public class Preferences : Object
         settings.bind (DISCO_MODE_SETTINGS_KEY, this, "disco-mode", SettingsBindFlags.DEFAULT);
         settings.bind (BLINDFOLD_MODE_SETTINGS_KEY, this, "blindfold-mode", SettingsBindFlags.DEFAULT);
         settings.bind (SHOW_ATTACKED_SQUARES_SETTINGS_KEY, this, "show-attacked-squares", SettingsBindFlags.DEFAULT);
+        settings.bind (KING_OF_THE_HILL_SETTINGS_KEY, this, "king-of-the-hill", SettingsBindFlags.DEFAULT);
 
         settings.bind_with_mapping (
             BOARD_ORIENTATION_SETTINGS_KEY, 

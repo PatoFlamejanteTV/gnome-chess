@@ -130,6 +130,7 @@ public class ChessView : Gtk.DrawingArea
         bool in_check = false;
         int[] threatening_ranks = null;
         int[] threatening_files = null;
+        bool[] threatening_bitmap = new bool[64];
 
         if (!scene.animating && scene.game != null)
         {
@@ -146,6 +147,8 @@ public class ChessView : Gtk.DrawingArea
             {
                 in_check = true;
                 scene.game.current_state.get_positions_threatening_king (scene.game.current_player, out threatening_ranks, out threatening_files);
+                for (int i = 0; i < threatening_ranks.length; i++)
+                    threatening_bitmap[threatening_ranks[i] * 8 + threatening_files[i]] = true;
             }
         }
 
@@ -189,17 +192,9 @@ public class ChessView : Gtk.DrawingArea
                     {
                         highlight_red = true;
                     }
-                    else
+                    else if (threatening_bitmap[rank * 8 + file])
                     {
-                        // Check threatening pieces
-                        for (int i = 0; i < threatening_ranks.length; i++)
-                        {
-                            if (threatening_ranks[i] == rank && threatening_files[i] == file)
-                            {
-                                highlight_red = true;
-                                break;
-                            }
-                        }
+                        highlight_red = true;
                     }
                 }
 

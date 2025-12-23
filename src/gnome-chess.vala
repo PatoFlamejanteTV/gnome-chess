@@ -1520,6 +1520,9 @@ Copyright © 2015–2016 Sahil Sareen""";
         if (settings.get_boolean (CYLINDER_SETTINGS_KEY))
             variants += "Cylinder";
 
+        if (settings.get_boolean ("toroidal"))
+            variants += "Toroidal";
+
         if (variants.length > 0)
             pgn_game.tags.insert ("Variant", string.joinv (", ", variants));
 

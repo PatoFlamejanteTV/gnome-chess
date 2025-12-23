@@ -46,6 +46,7 @@ public class ChessGame : Object
     public bool enable_table_punch;
     public int table_punch_chance;
     public bool is_cylinder;
+    public bool is_toroidal;
     public List<ChessState> move_stack;
 
     /* Cached number of moves in the stack. Used to avoid O(N) length() calls.
@@ -99,7 +100,7 @@ public class ChessGame : Object
         }
     }
 
-    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false, bool is_dunsany = false, bool is_cylinder = false) throws PGNError
+    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false, bool is_dunsany = false, bool is_cylinder = false, bool is_toroidal = false) throws PGNError
     {
         string start_fen = fen;
         if (is_chess960 && start_fen == STANDARD_SETUP)
@@ -119,6 +120,8 @@ public class ChessGame : Object
             start_state.is_dunsany = true;
         if (is_cylinder)
             start_state.is_cylinder = true;
+        if (is_toroidal)
+            start_state.is_toroidal = true;
         move_stack.prepend (start_state);
         result = ChessResult.IN_PROGRESS;
 

@@ -42,6 +42,8 @@ public class NewGameDialog : Adw.PreferencesDialog
     [GtkChild]
     private unowned Gtk.Switch cylinder_switch;
     [GtkChild]
+    private unowned Gtk.Switch toroidal_switch;
+    [GtkChild]
     private unowned Gtk.Switch table_punch_switch;
     [GtkChild]
     private unowned Gtk.SpinButton table_punch_spin;
@@ -58,6 +60,7 @@ public class NewGameDialog : Adw.PreferencesDialog
         preferences.bind_property ("chess960", chess960_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("dunsany", dunsany_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("cylinder", cylinder_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
+        preferences.bind_property ("toroidal", toroidal_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("enable-table-punch", table_punch_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("table-punch-chance", table_punch_spin, "value", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
 

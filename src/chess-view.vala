@@ -393,15 +393,17 @@ public class ChessView : Gtk.DrawingArea
         if (scene.game.result != ChessResult.IN_PROGRESS)
             return;
 
-        int file = (int) Math.floor ((event_x - 0.5 * get_width () + square_size * 4) / square_size);
-        int rank = 7 - (int) Math.floor ((event_y - 0.5 * get_height () + square_size * 4) / square_size);
+        var matrix = Cairo.Matrix.identity ();
+        matrix.translate (get_width () / 2, get_height () / 2);
+        matrix.rotate (Math.PI * scene.board_angle / 180.0);
+        matrix.invert ();
 
-        // FIXME: Use proper Cairo rotation matrix
-        if (scene.board_angle == 180.0)
-        {
-            rank = 7 - rank;
-            file = 7 - file;
-        }
+        double x = event_x;
+        double y = event_y;
+        matrix.transform_point (ref x, ref y);
+
+        int file = (int) Math.floor ((x + square_size * 4) / square_size);
+        int rank = 7 - (int) Math.floor ((y + square_size * 4) / square_size);
 
         if (file < 0 || file >= 8 || rank < 0 || rank >= 8)
             return;

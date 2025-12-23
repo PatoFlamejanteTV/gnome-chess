@@ -31,6 +31,18 @@
     <file preprocess="xml-stripblanks" alias="simple/whitePawn.svg">pieces/simple/whitePawn.svg</file>
     <file preprocess="xml-stripblanks" alias="simple/whiteQueen.svg">pieces/simple/whiteQueen.svg</file>
     <file preprocess="xml-stripblanks" alias="simple/whiteRook.svg">pieces/simple/whiteRook.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/blackBishop.svg">pieces/emoji/blackBishop.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/blackKing.svg">pieces/emoji/blackKing.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/blackKnight.svg">pieces/emoji/blackKnight.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/blackPawn.svg">pieces/emoji/blackPawn.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/blackQueen.svg">pieces/emoji/blackQueen.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/blackRook.svg">pieces/emoji/blackRook.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/whiteBishop.svg">pieces/emoji/whiteBishop.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/whiteKing.svg">pieces/emoji/whiteKing.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/whiteKnight.svg">pieces/emoji/whiteKnight.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/whitePawn.svg">pieces/emoji/whitePawn.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/whiteQueen.svg">pieces/emoji/whiteQueen.svg</file>
+    <file preprocess="xml-stripblanks" alias="emoji/whiteRook.svg">pieces/emoji/whiteRook.svg</file>
   </gresource>
   <gresource prefix="/org/gnome/Chess/gtk">
     <file preprocess="xml-stripblanks">help-overlay.ui</file>

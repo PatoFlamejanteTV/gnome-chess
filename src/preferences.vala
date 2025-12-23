@@ -347,7 +347,8 @@ public enum MoveFormat
 public enum PieceStyle
 {
     SIMPLE,
-    FANCY;
+    FANCY,
+    EMOJI;
 
     public string display_name ()
     {
@@ -357,6 +358,8 @@ public enum PieceStyle
             return C_("chess-piece-style", "Simple");
         case FANCY:
             return C_("chess-piece-style", "Fancy");
+        case EMOJI:
+            return C_("chess-piece-style", "Emoji");
         default:
             assert_not_reached ();
         }
@@ -370,6 +373,8 @@ public enum PieceStyle
             return "simple";
         case FANCY:
             return "fancy";
+        case EMOJI:
+            return "emoji";
         default:
             assert_not_reached ();
         }
@@ -383,6 +388,8 @@ public enum PieceStyle
             return SIMPLE;
         case "fancy":
             return FANCY;
+        case "emoji":
+            return EMOJI;
         default:
             return null;
         }

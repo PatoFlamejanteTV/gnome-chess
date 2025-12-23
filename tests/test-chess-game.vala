@@ -70,6 +70,64 @@ class GNOMEChess
         stderr.printf ("%d. PASS %s + %s is invalid\n", test_count, fen, move);
     }
 
+    private static void test_three_fold_repetition ()
+    {
+        var game = new ChessGame ();
+        game.start ();
+
+        /* 1. Nf3 Nf6 */
+        if (!game.white.move ("Nf3"))
+        {
+             stderr.printf ("%d. FAIL Failed to move Nf3\n", test_count + 1);
+             failure_count++;
+             test_count++;
+             return;
+        }
+        if (!game.black.move ("Nf6"))
+        {
+             stderr.printf ("%d. FAIL Failed to move Nf6\n", test_count + 1);
+             failure_count++;
+             test_count++;
+             return;
+        }
+
+        /* 2. Ng1 Ng8 (Repeat 2) */
+        game.white.move ("Ng1");
+        game.black.move ("Ng8");
+
+        /* 3. Nf3 Nf6 */
+        game.white.move ("Nf3");
+        game.black.move ("Nf6");
+
+        /* 4. Ng1 Ng8 (Repeat 3) */
+        game.white.move ("Ng1");
+        game.black.move ("Ng8");
+
+        test_count++;
+
+        /* Now it should be 3-fold repetition. Check if we can claim draw. */
+        if (!game.can_claim_draw ())
+        {
+            stderr.printf ("%d. FAIL Should be able to claim draw after 3-fold repetition\n", test_count);
+            failure_count++;
+            return;
+        }
+
+        /* Claim draw */
+        game.white.claim_draw ();
+
+        if (game.result != ChessResult.DRAW || game.rule != ChessRule.THREE_FOLD_REPETITION)
+        {
+            stderr.printf ("%d. FAIL Result should be DRAW by THREE_FOLD_REPETITION, got %s by %s\n",
+                           test_count,
+                           game.result.to_string (), game.rule.to_string ());
+            failure_count++;
+            return;
+        }
+
+        stderr.printf ("%d. PASS Three-fold repetition detected\n", test_count);
+    }
+
     public static int main (string[] args)
     {
         /* Pawn move */
@@ -182,7 +240,7 @@ class GNOMEChess
         //test_bad_move ("p7/8/8/8/8/8/8/P7 w - - 99 1", "draw");
 
         /* Three fold repetition */
-        // FIXME: Need a test for three fold repetition
+        test_three_fold_repetition ();
 
         stdout.printf ("%d/%d tests successful\n", test_count - failure_count, test_count);
 

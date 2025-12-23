@@ -1,6 +1,7 @@
 tests = [
   'test-chess-game',
   'test-chess-pgn',
+  'test-chess-debug',
 ]
 
 tests_vala_args = [

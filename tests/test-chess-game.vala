@@ -19,8 +19,52 @@ class GNOMEChess
                                         ChessRule rule = ChessRule.CHECKMATE,
                                         bool verify_san = false)
     {
-        ChessState state = new ChessState (fen);
         test_count++;
+
+        if (move == "draw")
+        {
+            ChessGame game;
+            try
+            {
+                game = new ChessGame (fen);
+            }
+            catch (PGNError e)
+            {
+                stderr.printf ("%d. FAIL %s + failed to create game: %s\n", test_count, fen, e.message);
+                failure_count++;
+                return;
+            }
+            game.start ();
+
+            if (!game.can_claim_draw ())
+            {
+                stderr.printf ("%d. FAIL %s + claim draw is not allowed\n", test_count, fen);
+                failure_count++;
+                return;
+            }
+
+            game.current_player.claim_draw ();
+
+            if (game.result != result || game.rule != rule)
+            {
+                stderr.printf ("%d. FAIL %s + claim draw has result %s (%s) not %s (%s)\n",
+                    test_count, fen, game.result.to_string (), game.rule.to_string (), result.to_string (), rule.to_string ());
+                failure_count++;
+                return;
+            }
+
+            if (game.current_state.get_fen () != result_fen)
+            {
+                stderr.printf ("%d. FAIL %s + claim draw has state %s not %s\n", test_count, fen, game.current_state.get_fen (), result_fen);
+                failure_count++;
+                return;
+            }
+
+            stderr.printf ("%d. PASS %s + claim draw is valid\n", test_count, fen);
+            return;
+        }
+
+        ChessState state = new ChessState (fen);
         if (!state.move (move))
         {
             stderr.printf ("%d. FAIL %s + %s is an invalid move\n", test_count, fen, move);
@@ -58,8 +102,35 @@ class GNOMEChess
 
     private static void test_bad_move (string fen, string move)
     {
-        ChessState state = new ChessState (fen);
         test_count++;
+
+        if (move == "draw")
+        {
+             ChessGame game;
+             try
+             {
+                 game = new ChessGame (fen);
+             }
+             catch (PGNError e)
+             {
+                 stderr.printf ("%d. FAIL %s + failed to create game: %s\n", test_count, fen, e.message);
+                 failure_count++;
+                 return;
+             }
+             game.start ();
+             if (game.can_claim_draw ())
+             {
+                 stderr.printf ("%d. FAIL %s + %s is valid\n", test_count, fen, move);
+                 failure_count++;
+             }
+             else
+             {
+                 stderr.printf ("%d. PASS %s + %s is invalid\n", test_count, fen, move);
+             }
+             return;
+        }
+
+        ChessState state = new ChessState (fen);
         if (state.move (move, false))
         {
             stderr.printf ("%d. FAIL %s + %s is valid\n", test_count, fen, move);
@@ -175,11 +246,11 @@ class GNOMEChess
         // FIXME: Need to be able to test claim draw
 
         /* Claim draw due to 50 move rule */
-        //test_good_move ("p7/8/8/8/8/8/8/P7 w - - 100 1", "draw",
-        //                "p7/8/8/8/8/8/8/P7 w - - 100 1", ChessResult.DRAW, ChessRule.FIFTY_MOVES);
+        test_good_move ("p7/8/8/8/8/8/8/P7 w - - 100 1", "draw",
+                        "p7/8/8/8/8/8/8/P7 w - - 100 1", ChessResult.DRAW, ChessRule.FIFTY_MOVES);
 
         /* Need 100 halfmoves for 50 move rule */
-        //test_bad_move ("p7/8/8/8/8/8/8/P7 w - - 99 1", "draw");
+        test_bad_move ("p7/8/8/8/8/8/8/P7 w - - 99 1", "draw");
 
         /* Three fold repetition */
         // FIXME: Need a test for three fold repetition

@@ -264,10 +264,7 @@ public class ChessState : Object
         value.append_printf ("%d", halfmove_clock);
 
         value.append_c (' ');
-        if (current_player.color == Color.WHITE)
-            value.append_printf ("%d", number / 2);
-        else
-            value.append_printf ("%d", number / 2 + 1);
+        value.append_printf ("%d", number / 2 + 1);
 
         return value.str;
     }

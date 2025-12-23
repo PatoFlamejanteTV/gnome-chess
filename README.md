@@ -24,7 +24,7 @@ Then build with:
 And run with:
 
 ```bash
-./run.sh # run org.Gnome.Chess, in this case, my modified version
+./run.sh # runs org.Gnome.Chess, in this case, my modified version
 ```
 
 ## Useful links

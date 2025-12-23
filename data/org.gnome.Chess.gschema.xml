@@ -148,6 +148,11 @@
       <summary>A flag to enable Cylinder mode</summary>
       <description>A flag to enable Cylinder mode</description>
     </key>
+    <key name="toroidal" type="b">
+      <default>false</default>
+      <summary>A flag to enable Toroidal mode</summary>
+      <description>A flag to enable Toroidal mode</description>
+    </key>
     <key name="enable-table-punch" type="b">
       <default>false</default>
       <summary>Enable table punching</summary>

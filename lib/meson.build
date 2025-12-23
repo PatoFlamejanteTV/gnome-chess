@@ -8,6 +8,7 @@ libchess_sources = [
   'chess-piece.vala',
   'chess-player.vala',
   'chess-state.vala',
+  'chess-debug.vala',
 ]
 
 libchess_vala_args = [

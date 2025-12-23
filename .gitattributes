@@ -1,1 +1,3 @@
 **.* linguist-detectable
+**.po linguist-vendored
+**.svg linguist-vendored

@@ -84,6 +84,19 @@
                     </child>
                   </object>
                 </child>
+                </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Chess960</property>
+                    <property name="use-underline">true</property>
+                    <property name="activatable_widget">chess960_switch</property>
+                    <child>
+                       <object class="GtkSwitch" id="chess960_switch">
+                        <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>

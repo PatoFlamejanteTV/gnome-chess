@@ -35,6 +35,8 @@ public class NewGameDialog : Adw.PreferencesDialog
     private unowned Gtk.Switch time_limit_switch;
     [GtkChild]
     private unowned Gtk.Switch king_of_the_hill_switch;
+    [GtkChild]
+    private unowned Gtk.Switch chess960_switch;
 
     public NewGameDialog (Preferences preferences, List<AIProfile> ai_profiles)
     {
@@ -45,6 +47,7 @@ public class NewGameDialog : Adw.PreferencesDialog
         preferences.bind_property ("play-as", play_as_combo, "selected", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("difficulty", difficulty_combo, "selected", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("king-of-the-hill", king_of_the_hill_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
+        preferences.bind_property ("chess960", chess960_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
 
         preferences.bind_property (
             "opponent",

@@ -133,5 +133,10 @@
       <summary>A flag to enable King of the Hill mode</summary>
       <description>A flag to enable King of the Hill mode</description>
     </key>
+    <key name="chess960" type="b">
+      <default>false</default>
+      <summary>A flag to enable Chess960 mode</summary>
+      <description>A flag to enable Chess960 mode</description>
+    </key>
   </schema>
 </schemalist>

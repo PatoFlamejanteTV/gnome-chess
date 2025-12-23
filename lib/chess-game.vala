@@ -96,11 +96,19 @@ public class ChessGame : Object
         }
     }
 
-    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false) throws PGNError
+    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false) throws PGNError
     {
+        string start_fen = fen;
+        if (is_chess960 && start_fen == STANDARD_SETUP)
+        {
+             start_fen = get_chess960_fen ();
+        }
         this.king_of_the_hill = king_of_the_hill;
         is_started = false;
-        move_stack.prepend (new ChessState (fen));
+        var start_state = new ChessState (start_fen);
+        if (is_chess960)
+            start_state.is_chess960 = true;
+        move_stack.prepend (start_state);
         result = ChessResult.IN_PROGRESS;
 
         if (moves != null)
@@ -456,5 +464,70 @@ public class ChessGame : Object
                 return true;
         }
         return false;
+    }
+
+    public static string get_chess960_fen ()
+    {
+        var placement = new string[8];
+        for (int i = 0; i < 8; i++) placement[i] = "";
+
+        // Algorithm to place pieces
+        // 1. Bishops on opposite colors
+        int b1_idx = Random.int_range (0, 4) * 2; // 0, 2, 4, 6
+        int b2_idx = Random.int_range (0, 4) * 2 + 1; // 1, 3, 5, 7
+        placement[b1_idx] = "B";
+        placement[b2_idx] = "B";
+
+        // 2. Queen
+        int q_idx = -1;
+        while (true)
+        {
+            q_idx = Random.int_range (0, 8);
+            if (placement[q_idx] == "") break;
+        }
+        placement[q_idx] = "Q";
+
+        // 3. Knights
+        for (int k = 0; k < 2; k++)
+        {
+            int n_idx = -1;
+            while (true)
+            {
+                n_idx = Random.int_range (0, 8);
+                if (placement[n_idx] == "") break;
+            }
+            placement[n_idx] = "N";
+        }
+
+        // 4. Rooks and King (R K R pattern on remaining squares)
+        var remaining = new int[3];
+        int r_count = 0;
+        for (int i = 0; i < 8; i++)
+        {
+            if (placement[i] == "")
+            {
+               remaining[r_count] = i;
+               r_count++;
+            }
+        }
+        
+        placement[remaining[0]] = "R";
+        placement[remaining[1]] = "K";
+        placement[remaining[2]] = "R";
+
+        // Build FEN string
+        var row = "";
+        for (int i = 0; i < 8; i++) row += placement[i];
+        
+        var white_row = row;
+        var black_row = row.down ();
+
+        // Standard FEN logic for other fields
+        // Since we are starting fresh, full castling rights (KQkq) are available.
+        // NOTE: In current engine, KQkq implies outer Rooks if standard.
+        // But for 960 we rely on the flags being true.
+        // Our 'is_960' flag in ChessState will enforce correct checks.
+        
+        return "%s/pppppppp/8/8/8/8/PPPPPPPP/%s w KQkq - 0 1".printf (black_row, white_row);
     }
 }

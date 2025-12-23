@@ -288,7 +288,8 @@ Copyright © 2015–2016 Sahil Sareen""";
         try
         {
             var is_koth = pgn_game.tags.lookup ("Variant") == "King of the Hill";
-            game = new ChessGame (fen, moves, is_koth);
+            var is_960 = pgn_game.tags.lookup ("Variant") == "Chess960";
+            game = new ChessGame (fen, moves, is_koth, is_960);
         }
         catch (Error e)
         {
@@ -1504,6 +1505,9 @@ Copyright © 2015–2016 Sahil Sareen""";
 
         if (settings.get_boolean (KING_OF_THE_HILL_SETTINGS_KEY))
            pgn_game.tags.insert ("Variant", "King of the Hill");
+        
+        if (settings.get_boolean (CHESS960_SETTINGS_KEY))
+           pgn_game.tags.insert ("Variant", "Chess960");
 
         start_game ();
     }

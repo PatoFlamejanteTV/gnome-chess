@@ -43,6 +43,9 @@ public class ChessGame : Object
     public ChessResult result;
     public ChessRule rule;
     public bool king_of_the_hill;
+    public bool enable_table_punch;
+    public int table_punch_chance;
+    public bool is_cylinder;
     public List<ChessState> move_stack;
 
     /* Cached number of moves in the stack. Used to avoid O(N) length() calls.
@@ -175,6 +178,19 @@ public class ChessGame : Object
         state.last_move.piece.moved ();
         if (state.last_move.castling_rook != null)
             state.last_move.castling_rook.moved ();
+
+        /* Table Punch Mechanic */
+        if (enable_table_punch && (white.local_human != black.local_human))
+        {
+             /* Only if Human vs AI */
+             /* Trigger chance */
+             if (Random.int_range (0, 100) < table_punch_chance)
+             {
+                 /* Punch the table! */
+                 state.scramble_pieces ();
+             }
+        }
+
         moved (state.last_move);
         complete_move ();
 

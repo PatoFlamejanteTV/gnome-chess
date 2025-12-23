@@ -929,6 +929,17 @@ public class ChessState : Object
     {
         bool have_pieces = false;
 
+        /* Complexity Warning:
+         * This method contains nested loops (depth 2 lexically, but effective depth is higher).
+         * Loop 1 (start): 0..64
+         *   Loop 2 (end): 0..64
+         *     move_with_index calls:
+         *       - is_cylinder_obstructed (Loop 3 if Cylinder Chess)
+         *       - is_in_check (calls get_positions_threatening_king, which loops over pieces and moves)
+         *
+         * Total complexity can reach O(Pieces * 64 * Cost(move_check)).
+         * Optimization: We return early on first valid move.
+         */
         for (int start = 0; start < 64; start++)
         {
             var p = board[start];
@@ -1358,5 +1369,64 @@ public class ChessState : Object
             curr_f += step_f;
         }
         return false;
+    }
+
+    public void scramble_pieces ()
+    {
+        /* Create a temporary board for the chaos */
+        var new_board = new ChessPiece[64];
+        for (int i = 0; i < 64; i++) new_board[i] = null;
+
+        /* Iterate through current board and scatter pieces */
+        for (int i = 0; i < 64; i++)
+        {
+            var piece = board[i];
+            if (piece == null) continue;
+
+            /* Decision:
+             * 0-10: Fall off table (Die)
+             * 10-80: Random Square (Move)
+             * 80-100: Stay
+             */
+            var fate = Random.int_range (0, 100);
+            if (fate < 10)
+            {
+                /* Falls off the table. Gone. */
+                continue;
+            }
+            else if (fate < 80)
+            {
+                /* Fly to random square */
+                var target = Random.int_range (0, 64);
+                /* Simple chaos: Overwrite. */
+                new_board[target] = piece;
+            }
+            else
+            {
+                /* Stay put (if not overwritten by someone else landing here) */
+                if (new_board[i] == null)
+                    new_board[i] = piece;
+            }
+        }
+
+        /* Apply chaos to the actual board */
+        for (int i = 0; i < 64; i++)
+            board[i] = new_board[i];
+
+        /* Rebuild game state cache */
+        piece_masks[Color.WHITE] = 0;
+        piece_masks[Color.BLACK] = 0;
+        for (int i = 0; i < 64; i++)
+        {
+            var p = board[i];
+            if (p != null)
+            {
+                uint64 mask = BitBoard.set_location_masks[i];
+                piece_masks[p.color] |= mask;
+            }
+        }
+
+        /* Re-evaluate check state */
+        check_state = get_check_state (current_player);
     }
 }

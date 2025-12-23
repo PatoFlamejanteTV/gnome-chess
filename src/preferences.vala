@@ -30,6 +30,8 @@ public const string KING_OF_THE_HILL_SETTINGS_KEY = "king-of-the-hill";
 public const string CHESS960_SETTINGS_KEY = "chess960";
 public const string DUNSANY_SETTINGS_KEY = "dunsany";
 public const string CYLINDER_SETTINGS_KEY = "cylinder";
+public const string ENABLE_TABLE_PUNCH_SETTINGS_KEY = "enable-table-punch";
+public const string TABLE_PUNCH_CHANCE_SETTINGS_KEY = "table-punch-chance";
 
 public class Preferences : Object
 {
@@ -50,6 +52,8 @@ public class Preferences : Object
     public bool chess960 { get; set; }
     public bool dunsany { get; set; }
     public bool cylinder { get; set; }
+    public bool enable_table_punch { get; set; }
+    public int table_punch_chance { get; set; }
 
     private bool syncing_time_limit = false;
     public TimeLimit? time_limit { get; set; }
@@ -66,6 +70,8 @@ public class Preferences : Object
         settings.bind (CHESS960_SETTINGS_KEY, this, "chess960", SettingsBindFlags.DEFAULT);
         settings.bind (DUNSANY_SETTINGS_KEY, this, "dunsany", SettingsBindFlags.DEFAULT);
         settings.bind (CYLINDER_SETTINGS_KEY, this, "cylinder", SettingsBindFlags.DEFAULT);
+        settings.bind (ENABLE_TABLE_PUNCH_SETTINGS_KEY, this, "enable-table-punch", SettingsBindFlags.DEFAULT);
+        settings.bind (TABLE_PUNCH_CHANCE_SETTINGS_KEY, this, "table-punch-chance", SettingsBindFlags.DEFAULT);
 
         settings.bind_with_mapping (
             BOARD_ORIENTATION_SETTINGS_KEY, 

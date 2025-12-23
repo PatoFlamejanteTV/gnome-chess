@@ -127,10 +127,8 @@ public class ChessView : Gtk.DrawingArea
         c.fill ();
 
         bool[] attacked_squares = null;
+        bool[] threatening_map = null;
         bool in_check = false;
-        int[] threatening_ranks = null;
-        int[] threatening_files = null;
-        bool[] threatening_bitmap = new bool[64];
 
         if (!scene.animating && scene.game != null)
         {
@@ -146,9 +144,18 @@ public class ChessView : Gtk.DrawingArea
             if (scene.game.current_state.check_state != CheckState.NONE)
             {
                 in_check = true;
+                int[] threatening_ranks = null;
+                int[] threatening_files = null;
                 scene.game.current_state.get_positions_threatening_king (scene.game.current_player, out threatening_ranks, out threatening_files);
+
+                // Convert to O(1) lookup map to avoid nested loop in drawing
+                threatening_map = new bool[64];
                 for (int i = 0; i < threatening_ranks.length; i++)
-                    threatening_bitmap[threatening_ranks[i] * 8 + threatening_files[i]] = true;
+                {
+                    int idx = scene.game.current_state.get_index (threatening_ranks[i], threatening_files[i]);
+                    if (idx >= 0 && idx < 64)
+                        threatening_map[idx] = true;
+                }
             }
         }
 
@@ -187,12 +194,13 @@ public class ChessView : Gtk.DrawingArea
                     // Check if King
                     // Optimization: access board directly to avoid O(moves) get_piece() call in get_piece
                     var state = scene.game.current_state;
-                    var piece = state.board[state.get_index (rank, file)];
+                    int idx = state.get_index (rank, file);
+                    var piece = state.board[idx];
                     if (piece != null && piece.type == PieceType.KING && piece.player == scene.game.current_player)
                     {
                         highlight_red = true;
                     }
-                    else if (threatening_bitmap[rank * 8 + file])
+                    else if (threatening_map != null && threatening_map[idx])
                     {
                         highlight_red = true;
                     }

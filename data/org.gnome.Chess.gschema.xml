@@ -148,5 +148,16 @@
       <summary>A flag to enable Cylinder mode</summary>
       <description>A flag to enable Cylinder mode</description>
     </key>
+    <key name="enable-table-punch" type="b">
+      <default>false</default>
+      <summary>Enable table punching</summary>
+      <description>Allow the AI to punch the table and scatter pieces</description>
+    </key>
+    <key name="table-punch-chance" type="i">
+      <default>10</default>
+      <range min="1" max="100"/>
+      <summary>Table punch chance</summary>
+      <description>The percentage chance (1-100) of a table punch occurring per move</description>
+    </key>
   </schema>
 </schemalist>

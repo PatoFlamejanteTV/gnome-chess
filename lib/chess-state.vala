@@ -349,7 +349,12 @@ public class ChessState : Object
         {
             if (is_valid_cylinder_wrap (start, end, piece.type, color))
             {
-                 if (!is_cylinder_obstructed (start, end))
+                 /* Knights jump, so no obstruction check needed */
+                 if (piece.type == PieceType.KNIGHT)
+                 {
+                     cyl_ok = true;
+                 }
+                 else if (!is_cylinder_obstructed (start, end))
                  {
                      cyl_ok = true;
                  }
@@ -1308,15 +1313,18 @@ public class ChessState : Object
                  return (df_wrap == 1 && dr <= 1);
                  
             case PieceType.ROOK:
-                /* Horizontal wrap */
-                return (dr == 0 && df_wrap > 0); 
+                /* Horizontal wrap - only if wrap path is shorter than standard */
+                return (dr == 0 && df_wrap < df); 
                 
             case PieceType.BISHOP:
-                /* Diagonal wrap */
-                return (df_wrap == dr);
+                /* Diagonal wrap - must be shorter than standard path */
+                return (df_wrap == dr && df_wrap < df);
                 
             case PieceType.QUEEN:
-                return (dr == 0 && df_wrap > 0) || (df_wrap == dr);
+                /* Queen: rook-like or bishop-like wrap, but must be shorter */
+                bool rook_wrap = (dr == 0 && df_wrap < df);
+                bool bishop_wrap = (df_wrap == dr && df_wrap < df);
+                return rook_wrap || bishop_wrap;
         }
         return false;
     }

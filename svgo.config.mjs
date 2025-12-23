@@ -1,3 +1,6 @@
+// Configs for SVGO, a tool to compress SVGs
+// https://github.com/svg/svgo
+
 export default {
     multipass: true, // Crucial for maximum compression
     plugins: [
@@ -6,6 +9,11 @@ export default {
             params: {
                 overrides: {
                     // Aggressive numeric rounding
+
+                    // small note here that rounding stuff make it
+                    // less precise, so be careful with it in logos and stuff
+                    // in case you want to use the same preset as mine.
+
                     cleanupNumericValues: { floatPrecision: 1 },
                     convertPathData: { floatPrecision: 1 },
                     // Keep these in the preset

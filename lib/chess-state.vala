@@ -1424,6 +1424,11 @@ public class ChessState : Object
         /* Rebuild game state cache */
         piece_masks[Color.WHITE] = 0;
         piece_masks[Color.BLACK] = 0;
+        /* Fixed bug: King locations were not updated after scrambling pieces, causing incorrect check detection.
+         * The fix iterates over the board to find and update king_locations for both players.
+         */
+        king_locations[Color.WHITE] = -1;
+        king_locations[Color.BLACK] = -1;
         for (int i = 0; i < 64; i++)
         {
             var p = board[i];
@@ -1431,6 +1436,8 @@ public class ChessState : Object
             {
                 uint64 mask = BitBoard.set_location_masks[i];
                 piece_masks[p.color] |= mask;
+                if (p.type == PieceType.KING)
+                    king_locations[p.color] = i;
             }
         }
 

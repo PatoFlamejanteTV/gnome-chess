@@ -31,13 +31,14 @@ public class ChessState : Object
     public int en_passant_index = -1;
     public CheckState check_state;
     public bool is_chess960;
+    public bool is_dunsany;
     public int halfmove_clock;
 
     public ChessPiece board[64];
     public ChessMove? last_move = null;
 
     /* Bitmap of all the pieces */
-    private uint64 piece_masks[2];
+    public uint64 piece_masks[2];
 
     private ChessState.empty ()
     {
@@ -131,6 +132,7 @@ public class ChessState : Object
         // Infer 960 state if needed or set explicitly later.
         // For now, default to false.
         is_chess960 = false;
+        is_dunsany = false;
 
         check_state = get_check_state (current_player);
     }
@@ -151,6 +153,7 @@ public class ChessState : Object
         state.en_passant_index = en_passant_index;
         state.check_state = check_state;
         state.is_chess960 = is_chess960;
+        state.is_dunsany = is_dunsany;
         if (last_move != null)
             state.last_move = last_move.copy ();
         for (int i = 0; i < 64; i++)
@@ -371,6 +374,8 @@ public class ChessState : Object
                 if (victim != null)
                     return false;
             }
+            if (is_dunsany && piece.color == Color.WHITE && (r1 - r0).abs() > 1)
+                return false;
             is_promotion = r1 == 0 || r1 == 7;
 
             /* Always show the file of a pawn capturing */

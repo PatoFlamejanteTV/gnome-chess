@@ -96,18 +96,24 @@ public class ChessGame : Object
         }
     }
 
-    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false) throws PGNError
+    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false, bool is_dunsany = false) throws PGNError
     {
         string start_fen = fen;
         if (is_chess960 && start_fen == STANDARD_SETUP)
         {
              start_fen = get_chess960_fen ();
         }
+        else if (is_dunsany && start_fen == STANDARD_SETUP)
+        {
+             start_fen = get_dunsany_fen ();
+        }
         this.king_of_the_hill = king_of_the_hill;
         is_started = false;
         var start_state = new ChessState (start_fen);
         if (is_chess960)
             start_state.is_chess960 = true;
+        if (is_dunsany)
+            start_state.is_dunsany = true;
         move_stack.prepend (start_state);
         result = ChessResult.IN_PROGRESS;
 
@@ -202,6 +208,19 @@ public class ChessGame : Object
         {
             stop (result, rule);
             return;
+        }
+
+        if (current_state.is_dunsany)
+        {
+             /* Dunsany Win Condition: Black wins if White has no pawns left */
+             /* Note: White might promote all pawns? No, capture all 32 pawns. */
+             /* Technically if White has NO PIECES, Black wins. */
+             if (current_state.piece_masks[Color.WHITE] == 0)
+             {
+                 stop (ChessResult.BLACK_WON, ChessRule.CHECKMATE); // Or custom rule? Using Checkmate for simplicity as "歼灭" (Annihilation)
+                 return;
+             }
+             /* White wins by Checkmate (handled by standard get_result) */
         }
 
         if (king_of_the_hill && is_king_on_hill (opponent))
@@ -529,5 +548,26 @@ public class ChessGame : Object
         // Our 'is_960' flag in ChessState will enforce correct checks.
         
         return "%s/pppppppp/8/8/8/8/PPPPPPPP/%s w KQkq - 0 1".printf (black_row, white_row);
+    }
+
+    public static string get_dunsany_fen ()
+    {
+        /* Dunsany's Chess:
+         * Black: Standard (rnbqkbnr/pppppppp/...)
+         * White: 32 Pawns on ranks 1-4.
+         * Black moves first.
+         * FEN: rnbqkbnr/pppppppp/......../......../PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP b KQkq - 0 1
+         * Wait, standard FEN order is Rank 8 down to Rank 1.
+         * Rank 8: rnbqkbnr (Black pieces)
+         * Rank 7: pppppppp (Black pawns)
+         * Rank 6: 8
+         * Rank 5: 8
+         * Rank 4: PPPPPPPP (White pawns)
+         * Rank 3: PPPPPPPP (White pawns)
+         * Rank 2: PPPPPPPP (White pawns)
+         * Rank 1: PPPPPPPP (White pawns)
+         * Active color: b
+         */
+         return "rnbqkbnr/pppppppp/8/8/PPPPPPPP/PPPPPPPP/PPPPPPPP/PPPPPPPP b KQkq - 0 1";
     }
 }

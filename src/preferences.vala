@@ -28,6 +28,7 @@ public const string OPPONENT_SETTINGS_KEY = "opponent";
 public const string DIFFICULTY_SETTINGS_KEY = "difficulty";
 public const string KING_OF_THE_HILL_SETTINGS_KEY = "king-of-the-hill";
 public const string CHESS960_SETTINGS_KEY = "chess960";
+public const string DUNSANY_SETTINGS_KEY = "dunsany";
 
 public class Preferences : Object
 {
@@ -46,6 +47,7 @@ public class Preferences : Object
     public Difficulty difficulty { get; set; }
     public bool king_of_the_hill { get; set; }
     public bool chess960 { get; set; }
+    public bool dunsany { get; set; }
 
     private bool syncing_time_limit = false;
     public TimeLimit? time_limit { get; set; }
@@ -60,6 +62,7 @@ public class Preferences : Object
         settings.bind (SHOW_ATTACKED_SQUARES_SETTINGS_KEY, this, "show-attacked-squares", SettingsBindFlags.DEFAULT);
         settings.bind (KING_OF_THE_HILL_SETTINGS_KEY, this, "king-of-the-hill", SettingsBindFlags.DEFAULT);
         settings.bind (CHESS960_SETTINGS_KEY, this, "chess960", SettingsBindFlags.DEFAULT);
+        settings.bind (DUNSANY_SETTINGS_KEY, this, "dunsany", SettingsBindFlags.DEFAULT);
 
         settings.bind_with_mapping (
             BOARD_ORIENTATION_SETTINGS_KEY, 

@@ -138,5 +138,10 @@
       <summary>A flag to enable Chess960 mode</summary>
       <description>A flag to enable Chess960 mode</description>
     </key>
+    <key name="dunsany" type="b">
+      <default>false</default>
+      <summary>A flag to enable Dunsany mode</summary>
+      <description>A flag to enable Dunsany mode</description>
+    </key>
   </schema>
 </schemalist>

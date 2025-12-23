@@ -122,6 +122,38 @@
                     </child>
                   </object>
                 </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Table Punching vs AI</property>
+                    <property name="use-underline">true</property>
+                    <property name="activatable_widget">table_punch_switch</property>
+                    <child>
+                       <object class="GtkSwitch" id="table_punch_switch">
+                        <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Punch Chance (%)</property>
+                    <property name="use-underline">true</property>
+                    <property name="sensitive" bind-source="table_punch_switch" bind-property="active" bind-flags="default|sync-create" />
+                    <child>
+                      <object class="GtkSpinButton" id="table_punch_spin">
+                        <property name="valign">center</property>
+                        <property name="adjustment">
+                          <object class="GtkAdjustment">
+                            <property name="lower">1</property>
+                            <property name="step-increment">5</property>
+                            <property name="upper">100</property>
+                          </object>
+                        </property>
+                        <property name="value">10</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>

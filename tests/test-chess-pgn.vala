@@ -45,6 +45,22 @@ class GNOMEChess
         }
     }
 
+    private static void test_pgn_file_invalid (string data)
+    {
+        test_count++;
+
+        try
+        {
+            new PGN.from_string (data);
+            stderr.printf ("%d. FAIL expected load error but succeeded\n", test_count);
+            failure_count++;
+        }
+        catch (PGNError e)
+        {
+            stderr.printf ("%d. PASS\n", test_count);
+        }
+    }
+
     public static int main (string[] args)
     {
         /* Simple file in export format */
@@ -103,6 +119,16 @@ class GNOMEChess
         /* Numeric Annotation Glyph */
         test_pgn_file ("e4 e5 $1 Nc3 $2",
                        "e4 e5 Nc3");
+
+        /* Invalid period placement check */
+        test_pgn_file_invalid ("1. e4. e5");
+
+        /* Black move with ... */
+        test_pgn_file ("1. ... e5", "e5");
+        test_pgn_file ("1... e5", "e5");
+
+        /* Compact format (no spaces) */
+        test_pgn_file ("1.e4", "e4");
 
         stdout.printf ("%d/%d tests successful\n", test_count - failure_count, test_count);
 

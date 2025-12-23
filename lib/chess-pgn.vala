@@ -298,9 +298,11 @@ public class PGN : Object
         }
     }
 
-    public PGN.from_string (string data) throws PGNError
+    public PGN.from_string (string original_data) throws PGNError
     {
-        // FIXME: Feed through newline at end to make sure parsing complete
+        string data = original_data;
+        if (!data.has_suffix ("\n"))
+            data += "\n";
 
         State state = State.TAGS, home_state = State.TAGS;
         PGNGame game = new PGNGame ();

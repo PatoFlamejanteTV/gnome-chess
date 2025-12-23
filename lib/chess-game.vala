@@ -96,7 +96,7 @@ public class ChessGame : Object
         }
     }
 
-    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false, bool is_dunsany = false) throws PGNError
+    public ChessGame (string fen = STANDARD_SETUP, string[]? moves = null, bool king_of_the_hill = false, bool is_chess960 = false, bool is_dunsany = false, bool is_cylinder = false) throws PGNError
     {
         string start_fen = fen;
         if (is_chess960 && start_fen == STANDARD_SETUP)
@@ -114,6 +114,8 @@ public class ChessGame : Object
             start_state.is_chess960 = true;
         if (is_dunsany)
             start_state.is_dunsany = true;
+        if (is_cylinder)
+            start_state.is_cylinder = true;
         move_stack.prepend (start_state);
         result = ChessResult.IN_PROGRESS;
 

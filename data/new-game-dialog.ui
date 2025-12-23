@@ -110,6 +110,18 @@
                     </child>
                   </object>
                 </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Cylinder Chess</property>
+                    <property name="use-underline">true</property>
+                    <property name="activatable_widget">cylinder_switch</property>
+                    <child>
+                       <object class="GtkSwitch" id="cylinder_switch">
+                        <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
             <child>

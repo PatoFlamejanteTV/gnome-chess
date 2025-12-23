@@ -32,6 +32,7 @@ public class ChessState : Object
     public CheckState check_state;
     public bool is_chess960;
     public bool is_dunsany;
+    public bool is_cylinder;
     public int halfmove_clock;
 
     public ChessPiece board[64];
@@ -133,6 +134,7 @@ public class ChessState : Object
         // For now, default to false.
         is_chess960 = false;
         is_dunsany = false;
+        is_cylinder = false;
 
         check_state = get_check_state (current_player);
     }
@@ -154,6 +156,7 @@ public class ChessState : Object
         state.check_state = check_state;
         state.is_chess960 = is_chess960;
         state.is_dunsany = is_dunsany;
+        state.is_cylinder = is_cylinder;
         if (last_move != null)
             state.last_move = last_move.copy ();
         for (int i = 0; i < 64; i++)
@@ -314,21 +317,36 @@ public class ChessState : Object
         uint64 end_mask = BitBoard.set_location_masks[end];
         uint64 move_mask = BitBoard.move_masks[color * 64*6 + piece.type * 64 + start];
         bool is_960_castling = false;
-        if ((end_mask & move_mask) == 0)
+        
+        bool std_geom_valid = (end_mask & move_mask) != 0;
+        if (std_geom_valid)
         {
            if (is_chess960 && piece.type == PieceType.KING && board[end] != null && board[end].type == PieceType.ROOK && board[end].player == player)
            {
                is_960_castling = true;
            }
-           else
-           {
-               return false;
-           }
         }
-
-        /* Check no pieces in the way */
+        
+        /* Check no pieces in the way (Standard Path) */
         uint64 over_mask = BitBoard.over_masks[start * 64 + end];
-        if ((over_mask & (piece_masks[Color.WHITE] | piece_masks[Color.BLACK])) != 0)
+        bool std_path_clear = (over_mask & (piece_masks[Color.WHITE] | piece_masks[Color.BLACK])) == 0;
+
+        bool std_ok = std_geom_valid && std_path_clear;
+        
+        /* Cylinder Check */
+        bool cyl_ok = false;
+        if (is_cylinder)
+        {
+            if (is_valid_cylinder_wrap (start, end, piece.type, color))
+            {
+                 if (!is_cylinder_obstructed (start, end))
+                 {
+                     cyl_ok = true;
+                 }
+            }
+        }
+        
+        if (!std_ok && !cyl_ok)
             return false;
 
         /* Get victim of move */
@@ -1225,5 +1243,110 @@ public class ChessState : Object
         }
 
         return true;
+    }
+    public bool is_valid_cylinder_wrap (int start, int end, PieceType type, Color color)
+    {
+        int r0 = get_rank (start); 
+        int f0 = get_file (start);
+        int r1 = get_rank (end); 
+        int f1 = get_file (end);
+        
+        /* If files are same, it's never a wrap (vertical is same as standard) */
+        if (f0 == f1) return false;
+
+        int df = (f1 - f0).abs ();
+        int dr = (r1 - r0).abs ();
+        
+        /* We are looking for moves that cross the a-h boundary.
+           Usually this implies taking the "short way" across the boundary.
+           Distance across boundary is 8 - df.
+           If 8 - df < df, it is a wrap candidate. (df > 4).
+           OR if specific moves like Knight allow jumping.
+         */
+        int df_wrap = 8 - df;
+
+        switch (type) {
+            case PieceType.PAWN:
+                /* Pawn capture wrap: a2->h3 (df=7, df_wrap=1). Forward rank 1. */
+                /* White moves +rank, Black -rank */
+                int rank_diff = r1 - r0; // +1 for White, -1 for Black
+                if (color == Color.WHITE && rank_diff != 1) return false;
+                if (color == Color.BLACK && rank_diff != -1) return false;
+                   
+                /* Must be diagonal */
+                return df_wrap == 1; // e.g. a->h or h->a
+                
+            case PieceType.KNIGHT:
+                /* Standard: (1,2) or (2,1).
+                   Wrap: (df_wrap, dr) in set.
+                */
+                return (df_wrap == 1 && dr == 2) || (df_wrap == 2 && dr == 1);
+                
+            case PieceType.KING:
+                 /* Wrap move 1 square */
+                 return (df_wrap == 1 && dr <= 1);
+                 
+            case PieceType.ROOK:
+                /* Horizontal wrap */
+                return (dr == 0 && df_wrap > 0); 
+                
+            case PieceType.BISHOP:
+                /* Diagonal wrap */
+                return (df_wrap == dr);
+                
+            case PieceType.QUEEN:
+                return (dr == 0 && df_wrap > 0) || (df_wrap == dr);
+        }
+        return false;
+    }
+    
+    public bool is_cylinder_obstructed (int start, int end)
+    {
+        int r0 = get_rank (start); int f0 = get_file (start);
+        int r1 = get_rank (end); int f1 = get_file (end);
+        
+        int dr = r1 - r0;
+        int df_raw = f1 - f0; // e.g. a(0)->h(7) = +7.
+        
+        /* 
+           Wrap Step Logic:
+           If moving Right (+df), and we wrap, we go Left (-1).
+           If moving Left (-df), and we wrap, we go Right (+1).
+           
+           Wait, a->h (+7). Wrap is -1.
+           a->g (+6). Wrap is -2.
+           h->a (-7). Wrap is +1.
+           
+           Step File direction is -sign(df_raw).
+        */
+        int step_r = (dr == 0) ? 0 : (dr > 0 ? 1 : -1);
+        int step_f = (df_raw > 0) ? -1 : 1; 
+
+        int curr_r = r0 + step_r;
+        int curr_f = f0 + step_f;
+        
+        /* Loop until we hit target. Handle wrapping of curr_f indices. */
+        while (curr_r != r1 || curr_f != f1)
+        {
+            /* Normalize file */
+            if (curr_f < 0) curr_f += 8;
+            if (curr_f > 7) curr_f -= 8;
+            
+            /* If we reached target after normalization (e.g. Knight jump landing), stop?
+               No, loop condition checks exact coordinates.
+               If Knight, this loop shouldn't run (or runs 0 times because we don't check obstruction for Knight).
+               But Knight isn't sliding. 
+               My `is_cylinder_obstructed` is generic. 
+            */
+            if (curr_r == r1 && curr_f == f1) break; // Reached destination
+            
+            /* Check obstruction */
+            int idx = get_index (curr_r, curr_f);
+            if (board[idx] != null) return true;
+            
+            curr_r += step_r;
+            curr_f += step_f;
+        }
+        return false;
     }
 }

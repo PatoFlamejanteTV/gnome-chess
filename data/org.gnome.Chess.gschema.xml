@@ -143,5 +143,10 @@
       <summary>A flag to enable Dunsany mode</summary>
       <description>A flag to enable Dunsany mode</description>
     </key>
+    <key name="cylinder" type="b">
+      <default>false</default>
+      <summary>A flag to enable Cylinder mode</summary>
+      <description>A flag to enable Cylinder mode</description>
+    </key>
   </schema>
 </schemalist>

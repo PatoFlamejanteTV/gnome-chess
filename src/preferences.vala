@@ -29,6 +29,7 @@ public const string DIFFICULTY_SETTINGS_KEY = "difficulty";
 public const string KING_OF_THE_HILL_SETTINGS_KEY = "king-of-the-hill";
 public const string CHESS960_SETTINGS_KEY = "chess960";
 public const string DUNSANY_SETTINGS_KEY = "dunsany";
+public const string CYLINDER_SETTINGS_KEY = "cylinder";
 
 public class Preferences : Object
 {
@@ -48,6 +49,7 @@ public class Preferences : Object
     public bool king_of_the_hill { get; set; }
     public bool chess960 { get; set; }
     public bool dunsany { get; set; }
+    public bool cylinder { get; set; }
 
     private bool syncing_time_limit = false;
     public TimeLimit? time_limit { get; set; }
@@ -63,6 +65,7 @@ public class Preferences : Object
         settings.bind (KING_OF_THE_HILL_SETTINGS_KEY, this, "king-of-the-hill", SettingsBindFlags.DEFAULT);
         settings.bind (CHESS960_SETTINGS_KEY, this, "chess960", SettingsBindFlags.DEFAULT);
         settings.bind (DUNSANY_SETTINGS_KEY, this, "dunsany", SettingsBindFlags.DEFAULT);
+        settings.bind (CYLINDER_SETTINGS_KEY, this, "cylinder", SettingsBindFlags.DEFAULT);
 
         settings.bind_with_mapping (
             BOARD_ORIENTATION_SETTINGS_KEY, 

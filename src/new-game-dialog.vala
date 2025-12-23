@@ -39,6 +39,8 @@ public class NewGameDialog : Adw.PreferencesDialog
     private unowned Gtk.Switch chess960_switch;
     [GtkChild]
     private unowned Gtk.Switch dunsany_switch;
+    [GtkChild]
+    private unowned Gtk.Switch cylinder_switch;
 
     public NewGameDialog (Preferences preferences, List<AIProfile> ai_profiles)
     {
@@ -51,6 +53,7 @@ public class NewGameDialog : Adw.PreferencesDialog
         preferences.bind_property ("king-of-the-hill", king_of_the_hill_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("chess960", chess960_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
         preferences.bind_property ("dunsany", dunsany_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
+        preferences.bind_property ("cylinder", cylinder_switch, "active", BindingFlags.BIDIRECTIONAL | BindingFlags.SYNC_CREATE, null, null);
 
         preferences.bind_property (
             "opponent",

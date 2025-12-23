@@ -919,6 +919,17 @@ public class ChessState : Object
     {
         bool have_pieces = false;
 
+        /* Complexity Warning:
+         * This method contains nested loops (depth 2 lexically, but effective depth is higher).
+         * Loop 1 (start): 0..64
+         *   Loop 2 (end): 0..64
+         *     move_with_index calls:
+         *       - is_cylinder_obstructed (Loop 3 if Cylinder Chess)
+         *       - is_in_check (calls get_positions_threatening_king, which loops over pieces and moves)
+         *
+         * Total complexity can reach O(Pieces * 64 * Cost(move_check)).
+         * Optimization: We return early on first valid move.
+         */
         for (int start = 0; start < 64; start++)
         {
             var p = board[start];

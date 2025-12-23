@@ -27,6 +27,6 @@ And run with:
 ./run.sh # run org.Gnome.Chess, in this case, my modified version
 ```
 
-## Useful linkss
+## Useful links
 - Report issues: <https://gitlab.gnome.org/GNOME/gnome-chess/issues/>
 - Donate: <https://www.gnome.org/friends/>

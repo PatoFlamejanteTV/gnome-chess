@@ -58,13 +58,18 @@
       <summary>A flag to enable board numbering</summary>
       <description>A flag to enable board numbering</description>
     </key>
+    <key name="disco-mode" type="b">
+      <default>false</default>
+      <summary>A flag to enable disco mode</summary>
+      <description>A flag to enable disco mode</description>
+    </key>
     <key name="blindfold-mode" type="b">
       <default>false</default>
       <summary>A flag to enable blindfold mode</summary>
       <description>A flag to enable blindfold mode</description>
     </key>
     <key name="show-attacked-squares" type="b">
-      <default>false</default>
+      <default>true</default>
       <summary>A flag to enable attacked squares highlighting</summary>
       <description>A flag to enable attacked squares highlighting</description>
     </key>

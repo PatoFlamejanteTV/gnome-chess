@@ -155,6 +155,7 @@ Copyright © 2015–2016 Sahil Sareen""";
         add_window (window);
 
         settings.bind (SHOW_BOARD_NUMBERING_SETTINGS_KEY, scene, "show-numbering", SettingsBindFlags.GET);
+        settings.bind (DISCO_MODE_SETTINGS_KEY, scene, "disco-mode", SettingsBindFlags.GET);
         settings.bind (BLINDFOLD_MODE_SETTINGS_KEY, scene, "blindfold-mode", SettingsBindFlags.GET);
         settings.bind (SHOW_ATTACKED_SQUARES_SETTINGS_KEY, scene, "show-attacked-squares", SettingsBindFlags.GET);
         settings.bind (PIECE_STYLE_SETTINGS_KEY, scene, "theme-name", SettingsBindFlags.GET);

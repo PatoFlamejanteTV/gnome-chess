@@ -208,6 +208,13 @@ public class ChessScene : Object
          set { _blindfold_mode = value; changed (); }
     }
 
+    private bool _disco_mode = false;
+    public bool disco_mode
+    {
+         get { return _disco_mode; }
+         set { _disco_mode = value; changed (); }
+    }
+
     private bool _show_attacked_squares = false;
     public bool show_attacked_squares
     {

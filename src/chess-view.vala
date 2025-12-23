@@ -157,7 +157,23 @@ public class ChessView : Gtk.DrawingArea
                 int y = (int) ((3 - rank) * square_size);
 
                 c.rectangle (x, y, square_size, square_size);
-                if ((file + rank) % 2 == 0)
+                if (scene.disco_mode)
+                {
+                    double time = (double) GLib.get_monotonic_time () / 1000000.0;
+                    double hue = (time * 50.0) % 360.0;
+                    double r, g, b;
+                    
+                    if ((file + rank) % 2 == 0)
+                        hsv_to_rgb (hue, 0.6, 0.8, out r, out g, out b);
+                    else
+                        hsv_to_rgb ((hue + 180.0) % 360.0, 0.6, 0.8, out r, out g, out b);
+                        
+                    c.set_source_rgb (r, g, b);
+                    
+                    // Keep animating
+                    queue_draw ();
+                }
+                else if ((file + rank) % 2 == 0)
                     c.set_source_rgb (0xba/255.0, 0xbd/255.0, 0xb6/255.0);
                 else
                     c.set_source_rgb (0xee/255.0, 0xee/255.0, 0xec/255.0);
@@ -323,6 +339,32 @@ public class ChessView : Gtk.DrawingArea
                     c.restore ();
                 }
             }
+        }
+    }
+
+    private void hsv_to_rgb (double h, double s, double v, out double r, out double g, out double b)
+    {
+        if (s == 0)
+        {
+            r = g = b = v;
+            return;
+        }
+
+        h /= 60.0;
+        int i = (int) Math.floor (h);
+        double f = h - i;
+        double p = v * (1.0 - s);
+        double q = v * (1.0 - s * f);
+        double t = v * (1.0 - s * (1.0 - f));
+
+        switch (i)
+        {
+        case 0: r = v; g = t; b = p; break;
+        case 1: r = q; g = v; b = p; break;
+        case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break;
+        case 4: r = t; g = p; b = v; break;
+        default: r = v; g = p; b = q; break;
         }
     }
 

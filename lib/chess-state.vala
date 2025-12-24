@@ -88,6 +88,8 @@ public class ChessState : Object
                 int index = get_index (rank, file);
                 ChessPiece piece = new ChessPiece (players[color], type);
                 board[index] = piece;
+                if (type == PieceType.KING)
+                    king_locations[color] = index;
                 uint64 mask = BitBoard.set_location_masks[index];
                 piece_masks[color] |= mask;
                 if (type == PieceType.KING)
@@ -682,6 +684,7 @@ public class ChessState : Object
         /* Can't castle once king has moved */
         if (piece.type == PieceType.KING)
         {
+            king_locations[color] = end;
             can_castle_kingside[color] = false;
             can_castle_queenside[color] = false;
             king_locations[color] = end;

@@ -305,6 +305,7 @@ public class PGN : Object
         State state = State.TAGS, home_state = State.TAGS;
         PGNGame game = new PGNGame ();
         bool in_escape = false;
+        bool last_token_was_number = false;
         size_t token_start = 0, line_offset = 0;
         string tag_name = "";
         StringBuilder tag_value = new StringBuilder ();
@@ -352,6 +353,7 @@ public class PGN : Object
                         games.append (game);
                         game = new PGNGame ();
                         state = State.TAGS;
+                        last_token_was_number = false;
                     }
                 }
                 else if (c == '.')
@@ -470,6 +472,7 @@ public class PGN : Object
                     for (int i = 0; i < symbol.length; i++)
                        if (!symbol[i].isdigit ())
                            is_number = false;
+                    last_token_was_number = is_number;
 
                     state = State.MOVE_TEXT;
                     offset--;
@@ -483,6 +486,7 @@ public class PGN : Object
                             games.append (game);
                             game = new PGNGame ();
                             state = State.TAGS;
+                            last_token_was_number = false;
                         }
                     }
                     else if (!is_number)
@@ -494,8 +498,10 @@ public class PGN : Object
                 break;
 
             case State.PERIOD:
-                /* FIXME: Should check these move carefully, e.g. "1. e2" */
-                state = State.MOVE_TEXT;
+                if (!last_token_was_number)
+                    state = State.ERROR;
+                else
+                    state = State.MOVE_TEXT;
                 break;
 
             case State.NAG:
@@ -505,6 +511,7 @@ public class PGN : Object
                 {
                     state = State.MOVE_TEXT;
                     offset--;
+                    last_token_was_number = false;
                 }
                 break;
 
@@ -515,7 +522,7 @@ public class PGN : Object
                 for (int i = 0; i < char_offset; i++)
                     stderr.printf (" ");
                 stderr.printf ("^\n");
-                return;
+                throw new PGNError.LOAD_ERROR ("Unexpected character");
             }
         }
 

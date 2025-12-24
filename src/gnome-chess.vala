@@ -287,10 +287,11 @@ Copyright © 2015–2016 Sahil Sareen""";
 
         try
         {
-            var is_koth = pgn_game.tags.lookup ("Variant") == "King of the Hill";
-            var is_960 = pgn_game.tags.lookup ("Variant") == "Chess960";
-            var is_dunsany = pgn_game.tags.lookup ("Variant") == "Dunsany";
-            var is_cylinder = pgn_game.tags.lookup ("Variant") == "Cylinder";
+            var variant = pgn_game.tags.lookup ("Variant");
+            var is_koth = variant != null && variant.contains ("King of the Hill");
+            var is_960 = variant != null && variant.contains ("Chess960");
+            var is_dunsany = variant != null && variant.contains ("Dunsany");
+            var is_cylinder = variant != null && variant.contains ("Cylinder");
             game = new ChessGame (fen, moves, is_koth, is_960, is_dunsany, is_cylinder);
         }
         catch (Error e)
@@ -1505,17 +1506,26 @@ Copyright © 2015–2016 Sahil Sareen""";
             settings.set_string (LAST_PLAYED_AS_SETTINGS_KEY, play_as);
         }
 
+
+        string[] variants = {};
         if (settings.get_boolean (KING_OF_THE_HILL_SETTINGS_KEY))
-           pgn_game.tags.insert ("Variant", "King of the Hill");
+            variants += "King of the Hill";
         
         if (settings.get_boolean (CHESS960_SETTINGS_KEY))
-           pgn_game.tags.insert ("Variant", "Chess960");
+            variants += "Chess960";
 
         if (settings.get_boolean (DUNSANY_SETTINGS_KEY))
-           pgn_game.tags.insert ("Variant", "Dunsany");
+            variants += "Dunsany";
 
         if (settings.get_boolean (CYLINDER_SETTINGS_KEY))
-           pgn_game.tags.insert ("Variant", "Cylinder");
+            variants += "Cylinder";
+
+        if (settings.get_boolean ("toroidal"))
+            variants += "Toroidal";
+
+        if (variants.length > 0)
+            pgn_game.tags.insert ("Variant", string.joinv (", ", variants));
+
 
         start_game ();
     }

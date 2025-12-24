@@ -127,9 +127,8 @@ public class ChessView : Gtk.DrawingArea
         c.fill ();
 
         bool[] attacked_squares = null;
+        bool[] threatening_map = null;
         bool in_check = false;
-        int[] threatening_ranks = null;
-        int[] threatening_files = null;
 
         if (!scene.animating && scene.game != null)
         {
@@ -145,7 +144,18 @@ public class ChessView : Gtk.DrawingArea
             if (scene.game.current_state.check_state != CheckState.NONE)
             {
                 in_check = true;
+                int[] threatening_ranks = null;
+                int[] threatening_files = null;
                 scene.game.current_state.get_positions_threatening_king (scene.game.current_player, out threatening_ranks, out threatening_files);
+
+                // Convert to O(1) lookup map to avoid nested loop in drawing
+                threatening_map = new bool[64];
+                for (int i = 0; i < threatening_ranks.length; i++)
+                {
+                    int idx = scene.game.current_state.get_index (threatening_ranks[i], threatening_files[i]);
+                    if (idx >= 0 && idx < 64)
+                        threatening_map[idx] = true;
+                }
             }
         }
 
@@ -184,22 +194,15 @@ public class ChessView : Gtk.DrawingArea
                     // Check if King
                     // Optimization: access board directly to avoid O(moves) get_piece() call in get_piece
                     var state = scene.game.current_state;
-                    var piece = state.board[state.get_index (rank, file)];
+                    int idx = state.get_index (rank, file);
+                    var piece = state.board[idx];
                     if (piece != null && piece.type == PieceType.KING && piece.player == scene.game.current_player)
                     {
                         highlight_red = true;
                     }
-                    else
+                    else if (threatening_map != null && threatening_map[idx])
                     {
-                        // Check threatening pieces
-                        for (int i = 0; i < threatening_ranks.length; i++)
-                        {
-                            if (threatening_ranks[i] == rank && threatening_files[i] == file)
-                            {
-                                highlight_red = true;
-                                break;
-                            }
-                        }
+                        highlight_red = true;
                     }
                 }
 
@@ -390,15 +393,17 @@ public class ChessView : Gtk.DrawingArea
         if (scene.game.result != ChessResult.IN_PROGRESS)
             return;
 
-        int file = (int) Math.floor ((event_x - 0.5 * get_width () + square_size * 4) / square_size);
-        int rank = 7 - (int) Math.floor ((event_y - 0.5 * get_height () + square_size * 4) / square_size);
+        var matrix = Cairo.Matrix.identity ();
+        matrix.translate (get_width () / 2, get_height () / 2);
+        matrix.rotate (Math.PI * scene.board_angle / 180.0);
+        matrix.invert ();
 
-        // FIXME: Use proper Cairo rotation matrix
-        if (scene.board_angle == 180.0)
-        {
-            rank = 7 - rank;
-            file = 7 - file;
-        }
+        double x = event_x;
+        double y = event_y;
+        matrix.transform_point (ref x, ref y);
+
+        int file = (int) Math.floor ((x + square_size * 4) / square_size);
+        int rank = 7 - (int) Math.floor ((y + square_size * 4) / square_size);
 
         if (file < 0 || file >= 8 || rank < 0 || rank >= 8)
             return;

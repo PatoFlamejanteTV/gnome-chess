@@ -33,6 +33,7 @@ public class ChessState : Object
     public bool is_chess960;
     public bool is_dunsany;
     public bool is_cylinder;
+    public bool is_toroidal;
     public int halfmove_clock;
 
     public ChessPiece board[64];
@@ -55,6 +56,7 @@ public class ChessState : Object
         players[Color.BLACK] = new ChessPlayer (Color.BLACK);
         king_locations[Color.WHITE] = -1;
         king_locations[Color.BLACK] = -1;
+
         for (int i = 0; i < 64; i++)
             board[i] = null;
 
@@ -90,6 +92,8 @@ public class ChessState : Object
                     king_locations[color] = index;
                 uint64 mask = BitBoard.set_location_masks[index];
                 piece_masks[color] |= mask;
+                if (type == PieceType.KING)
+                    king_locations[color] = index;
                 file++;
             }
         }
@@ -142,6 +146,7 @@ public class ChessState : Object
         is_chess960 = false;
         is_dunsany = false;
         is_cylinder = false;
+        is_toroidal = false;
 
         check_state = get_check_state (current_player);
     }
@@ -164,6 +169,7 @@ public class ChessState : Object
         state.is_chess960 = is_chess960;
         state.is_dunsany = is_dunsany;
         state.is_cylinder = is_cylinder;
+        state.is_toroidal = is_toroidal;
         if (last_move != null)
             state.last_move = last_move.copy ();
         for (int i = 0; i < 64; i++)
@@ -263,10 +269,7 @@ public class ChessState : Object
         value.append_printf ("%d", halfmove_clock);
 
         value.append_c (' ');
-        if (current_player.color == Color.WHITE)
-            value.append_printf ("%d", number / 2);
-        else
-            value.append_printf ("%d", number / 2 + 1);
+        value.append_printf ("%d", number / 2 + 1);
 
         return value.str;
     }
@@ -348,14 +351,36 @@ public class ChessState : Object
         {
             if (is_valid_cylinder_wrap (start, end, piece.type, color))
             {
-                 if (!is_cylinder_obstructed (start, end))
+                 /* Knights jump, so no obstruction check needed */
+                 if (piece.type == PieceType.KNIGHT)
+                 {
+                     cyl_ok = true;
+                 }
+                 else if (!is_cylinder_obstructed (start, end))
                  {
                      cyl_ok = true;
                  }
             }
         }
         
-        if (!std_ok && !cyl_ok)
+        bool tor_ok = false;
+        if (is_toroidal)
+        {
+             /* Toroidal check (includes Cylinder moves) */
+             if (is_valid_toroidal_wrap (start, end, piece.type, color))
+             {
+                 if (piece.type == PieceType.KNIGHT)
+                 {
+                     tor_ok = true;
+                 }
+                 else if (!is_toroidal_obstructed (start, end, piece.type))
+                 {
+                     tor_ok = true;
+                 }
+             }
+        }
+
+        if (!std_ok && !cyl_ok && !tor_ok)
             return false;
 
         /* Get victim of move */
@@ -662,6 +687,7 @@ public class ChessState : Object
             king_locations[color] = end;
             can_castle_kingside[color] = false;
             can_castle_queenside[color] = false;
+            king_locations[color] = end;
         }
         /* Can't castle once rooks have moved */
         else if (piece.type == PieceType.ROOK)
@@ -726,8 +752,7 @@ public class ChessState : Object
             can_castle_queenside[Color.BLACK] = old_black_can_castle_queenside;
             en_passant_index = old_en_passant_index;
             halfmove_clock = old_halfmove_clock;
-            if (piece.type == PieceType.KING)
-                king_locations[color] = old_king_location;
+            king_locations[color] = old_king_location;
 
             return result;
         }
@@ -880,10 +905,6 @@ public class ChessState : Object
             int[] files = {};
             for (int start = 0; start < 64; start++)
             {
-                var piece = board[start];
-                if (piece == null || piece.player != opponent)
-                    continue;
-
                 if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
                 {
                     ranks += get_rank (start);
@@ -933,6 +954,17 @@ public class ChessState : Object
     {
         bool have_pieces = false;
 
+        /* Complexity Warning:
+         * This method contains nested loops (depth 2 lexically, but effective depth is higher).
+         * Loop 1 (start): 0..64
+         *   Loop 2 (end): 0..64
+         *     move_with_index calls:
+         *       - is_cylinder_obstructed (Loop 3 if Cylinder Chess)
+         *       - is_in_check (calls get_positions_threatening_king, which loops over pieces and moves)
+         *
+         * Total complexity can reach O(Pieces * 64 * Cost(move_check)).
+         * Optimization: We return early on first valid move.
+         */
         for (int start = 0; start < 64; start++)
         {
             var p = board[start];
@@ -1301,17 +1333,238 @@ public class ChessState : Object
                  return (df_wrap == 1 && dr <= 1);
                  
             case PieceType.ROOK:
-                /* Horizontal wrap */
-                return (dr == 0 && df_wrap > 0); 
+                /* Horizontal wrap - only if wrap path is shorter than standard */
+                return (dr == 0 && df_wrap < df); 
                 
             case PieceType.BISHOP:
-                /* Diagonal wrap */
-                return (df_wrap == dr);
+                /* Diagonal wrap - must be shorter than standard path */
+                return (df_wrap == dr && df_wrap < df);
                 
             case PieceType.QUEEN:
-                return (dr == 0 && df_wrap > 0) || (df_wrap == dr);
+                /* Queen: rook-like or bishop-like wrap, but must be shorter */
+                bool rook_wrap = (dr == 0 && df_wrap < df);
+                bool bishop_wrap = (df_wrap == dr && df_wrap < df);
+                return rook_wrap || bishop_wrap;
         }
         return false;
+    }
+
+    public bool is_valid_toroidal_wrap (int start, int end, PieceType type, Color color)
+    {
+        int r0 = get_rank (start);
+        int f0 = get_file (start);
+        int r1 = get_rank (end);
+        int f1 = get_file (end);
+
+        if (start == end) return false;
+
+        /* Calculate distances */
+        int df = (f1 - f0).abs ();
+        int dr = (r1 - r0).abs ();
+
+        /* Wrapped distances */
+        int df_wrap = 8 - df;
+        int dr_wrap = 8 - dr;
+
+        /* Check for standard move first (no wrap)? No, this function checks ONLY valid wraps.
+           If it's a valid standard move, move_with_index handles it in std_ok.
+           However, we might want to allow "wrap" that is same as standard but inefficient?
+           No, usually wrap means we use the wrapped distance.
+        */
+
+        /* We use effective distances */
+        /* Possible pairs: (df, dr), (df_wrap, dr), (df, dr_wrap), (df_wrap, dr_wrap) */
+        /* Standard move uses (df, dr). We want others. */
+
+        bool h_wrap = df_wrap < df; // Or just if valid with df_wrap
+        bool v_wrap = dr_wrap < dr;
+
+        /* Wait, a move can be valid BOTH ways (e.g. df=4, df_wrap=4).
+           In that case std_ok might be true.
+           But if std_path_clear is false, we might want to try wrap path!
+           So we should return true if a valid wrap PATH exists.
+        */
+
+        switch (type) {
+            case PieceType.PAWN:
+                /* Pawns: Only Cylinder (Horizontal) wrapping allowed to preserve promotion direction. */
+                /* Use Cylinder logic exactly */
+                /* Wrap must be horizontal only */
+                if (f0 == f1) return false; // No vertical wrap for pawns
+
+                int rank_diff = r1 - r0;
+                if (color == Color.WHITE && rank_diff != 1) return false;
+                if (color == Color.BLACK && rank_diff != -1) return false;
+
+                return df_wrap == 1;
+
+            case PieceType.KNIGHT:
+                /* Check all combinations involving at least one wrap dimension (or just all valid knight jumps) */
+                bool jump_std = (df == 1 && dr == 2) || (df == 2 && dr == 1);
+                bool jump_h = (df_wrap == 1 && dr == 2) || (df_wrap == 2 && dr == 1);
+                bool jump_v = (df == 1 && dr_wrap == 2) || (df == 2 && dr_wrap == 1);
+                bool jump_hv = (df_wrap == 1 && dr_wrap == 2) || (df_wrap == 2 && dr_wrap == 1);
+
+                /* Return true if any wrap variant is valid.
+                   If jump_std is true, std_ok handled it? Not necessarily if we want to allow redundant jumps.
+                   But if std_ok is false, we need this to be true.
+                   So we return true if any jump is valid.
+                */
+                return jump_h || jump_v || jump_hv;
+
+            case PieceType.KING:
+                /* King moves 1 square in any direction (including diagonals) */
+                bool k_std = (df <= 1 && dr <= 1);
+                bool k_h = (df_wrap <= 1 && dr <= 1);
+                bool k_v = (df <= 1 && dr_wrap <= 1);
+                bool k_hv = (df_wrap <= 1 && dr_wrap <= 1);
+
+                return k_h || k_v || k_hv;
+
+            case PieceType.ROOK:
+                 /* Linear movement on File or Rank */
+                 /* Standard: df=0 or dr=0 */
+
+                 /* File (Vertical) Move: f0==f1 (df=0).
+                    Can wrap vertical: dr_wrap used.
+                 */
+                 if (df == 0) return true; // Valid geometry (vertical wrap potentially)
+
+                 /* Rank (Horizontal) Move: r0==r1 (dr=0).
+                    Can wrap horizontal: df_wrap used.
+                 */
+                 if (dr == 0) return true; // Valid geometry (horizontal wrap potentially)
+
+                 return false;
+
+            case PieceType.BISHOP:
+                 /* Diagonal: dx = dy */
+                 /* Check 4 pairs */
+                 if (df == dr) return true; // Standard diagonal (but maybe wrapped path needed?)
+                 if (df_wrap == dr) return true;
+                 if (df == dr_wrap) return true;
+                 if (df_wrap == dr_wrap) return true;
+                 return false;
+
+            case PieceType.QUEEN:
+                 if (df == 0 || dr == 0) return true; // Rook-like
+                 if (df == dr || df_wrap == dr || df == dr_wrap || df_wrap == dr_wrap) return true; // Bishop-like
+                 return false;
+        }
+        return false;
+    }
+
+    public bool is_toroidal_obstructed (int start, int end, PieceType type)
+    {
+        int r0 = get_rank (start); int f0 = get_file (start);
+        int r1 = get_rank (end); int f1 = get_file (end);
+
+        int dr = r1 - r0;
+        int df = f1 - f0;
+
+        int abs_dr = dr.abs();
+        int abs_df = df.abs();
+
+        /* Determine step direction based on SHORTEST valid path for the piece type.
+           Or rather, ANY valid path that is clear.
+           Since we don't know WHICH wrap the user intended (visuals usually imply shortest),
+           we should check if THERE EXISTS a clear path.
+
+           However, move logic usually implies a specific geometry.
+           For sliding pieces, if multiple paths exist (e.g. exactly 4x4 on 8x8 torus?),
+           standard chess logic allows the move if ANY valid path is clear?
+           Or usually the shortest path.
+
+           Let's iterate through valid geometries for the piece and check if clear.
+        */
+
+        /* Helper to check path */
+        // We can't use a local delegate easily in Vala within a method for this without closures?
+        // Let's just do logic.
+
+        /*
+         * Logic: Try all 4 topological paths (Normal, H-Wrap, V-Wrap, HV-Wrap).
+         * If the path is VALID for the piece AND CLEAR, return false (not obstructed).
+         * If no valid clear path found, return true (obstructed).
+         */
+
+        bool has_valid_geometry = false;
+
+        // 1. Normal Path (dr, df) - Already checked by std_ok path usually, but we check here for consistency?
+        // Actually std_ok checks std_path_clear.
+        // If we are here, std_ok might have failed.
+        // But we are in `tor_ok` block.
+
+        int[] drs = { dr, dr > 0 ? dr - 8 : dr + 8 }; // Normal, Wrapped
+        int[] dfs = { df, df > 0 ? df - 8 : df + 8 };
+
+        foreach (int d_r in drs)
+        {
+            foreach (int d_f in dfs)
+            {
+                /* Check if this (d_r, d_f) vector is valid for piece */
+                bool is_valid = false;
+                int adr = d_r.abs();
+                int adf = d_f.abs();
+
+                /* Reject 0,0 (start==end) */
+                if (adr == 0 && adf == 0) continue;
+
+                switch (type) {
+                    case PieceType.ROOK:
+                        if (adr == 0 || adf == 0) is_valid = true;
+                        break;
+                    case PieceType.BISHOP:
+                        if (adr == adf) is_valid = true;
+                        break;
+                    case PieceType.QUEEN:
+                        if (adr == 0 || adf == 0 || adr == adf) is_valid = true;
+                        break;
+                    case PieceType.KING:
+                        /* King moves 1 step. Steps=1. No obstruction check needed (intermediate is empty set). */
+                        is_valid = true;
+                        break;
+                    case PieceType.PAWN:
+                        /* Pawn moves 1 step (diagonal capture or forward). Steps=1. */
+                        is_valid = true;
+                        break;
+                }
+
+                if (!is_valid) continue;
+                has_valid_geometry = true;
+
+                /* Check obstruction for this vector */
+                if (is_vector_clear (start, d_r, d_f)) return false; // Found a clear path!
+            }
+        }
+
+        // If we found valid geometries but none were clear, it's obstructed.
+        // If we found NO valid geometries (shouldn't happen if is_valid_toroidal_wrap passed), return true.
+        return true;
+    }
+
+    private bool is_vector_clear (int start, int dr, int df)
+    {
+        int r = get_rank (start);
+        int f = get_file (start);
+
+        int steps = dr.abs().max(df.abs());
+        int step_r = dr == 0 ? 0 : (dr > 0 ? 1 : -1);
+        int step_f = df == 0 ? 0 : (df > 0 ? 1 : -1);
+
+        // We only check INTERMEDIATE squares. Not start, not end.
+        for (int i = 1; i < steps; i++)
+        {
+            r += step_r;
+            f += step_f;
+
+            // Normalize (Wrap)
+            if (r < 0) r += 8; else if (r >= 8) r -= 8;
+            if (f < 0) f += 8; else if (f >= 8) f -= 8;
+
+            if (board[get_index (r, f)] != null) return false;
+        }
+        return true;
     }
     
     public bool is_cylinder_obstructed (int start, int end)
@@ -1362,5 +1615,71 @@ public class ChessState : Object
             curr_f += step_f;
         }
         return false;
+    }
+
+    public void scramble_pieces ()
+    {
+        /* Create a temporary board for the chaos */
+        var new_board = new ChessPiece[64];
+        for (int i = 0; i < 64; i++) new_board[i] = null;
+
+        /* Iterate through current board and scatter pieces */
+        for (int i = 0; i < 64; i++)
+        {
+            var piece = board[i];
+            if (piece == null) continue;
+
+            /* Decision:
+             * 0-10: Fall off table (Die)
+             * 10-80: Random Square (Move)
+             * 80-100: Stay
+             */
+            var fate = Random.int_range (0, 100);
+            if (fate < 10)
+            {
+                /* Falls off the table. Gone. */
+                continue;
+            }
+            else if (fate < 80)
+            {
+                /* Fly to random square */
+                var target = Random.int_range (0, 64);
+                /* Simple chaos: Overwrite. */
+                new_board[target] = piece;
+            }
+            else
+            {
+                /* Stay put (if not overwritten by someone else landing here) */
+                if (new_board[i] == null)
+                    new_board[i] = piece;
+            }
+        }
+
+        /* Apply chaos to the actual board */
+        for (int i = 0; i < 64; i++)
+            board[i] = new_board[i];
+
+        /* Rebuild game state cache */
+        piece_masks[Color.WHITE] = 0;
+        piece_masks[Color.BLACK] = 0;
+        /* Fixed bug: King locations were not updated after scrambling pieces, causing incorrect check detection.
+         * The fix iterates over the board to find and update king_locations for both players.
+         */
+        king_locations[Color.WHITE] = -1;
+        king_locations[Color.BLACK] = -1;
+        for (int i = 0; i < 64; i++)
+        {
+            var p = board[i];
+            if (p != null)
+            {
+                uint64 mask = BitBoard.set_location_masks[i];
+                piece_masks[p.color] |= mask;
+                if (p.type == PieceType.KING)
+                    king_locations[p.color] = i;
+            }
+        }
+
+        /* Re-evaluate check state */
+        check_state = get_check_state (current_player);
     }
 }

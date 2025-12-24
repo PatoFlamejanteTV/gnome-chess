@@ -75,6 +75,7 @@
                 <child>
                   <object class="AdwActionRow">
                     <property name="title" translatable="yes">_King of the Hill</property>
+                    <property name="subtitle" translatable="yes">Win by moving your king to the center (d4, e4, d5, e5)</property>
                     <property name="use-underline">true</property>
                     <property name="activatable_widget">king_of_the_hill_switch</property>
                     <child>
@@ -84,10 +85,23 @@
                     </child>
                   </object>
                 </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Toroidal Chess (4D-Mode)</property>
+                    <property name="subtitle" translatable="yes">Board edges wrap both horizontally and vertically</property>
+                    <property name="use-underline">true</property>
+                    <property name="activatable_widget">toroidal_switch</property>
+                    <child>
+                       <object class="GtkSwitch" id="toroidal_switch">
+                        <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
                 </child>
                 <child>
                   <object class="AdwActionRow">
                     <property name="title" translatable="yes">_Chess960</property>
+                    <property name="subtitle" translatable="yes">Randomized starting position with bishops on opposite colors</property>
                     <property name="use-underline">true</property>
                     <property name="activatable_widget">chess960_switch</property>
                     <child>
@@ -97,10 +111,10 @@
                     </child>
                   </object>
                 </child>
-                </child>
                 <child>
                   <object class="AdwActionRow">
                     <property name="title" translatable="yes">_Dunsany's Chess</property>
+                    <property name="subtitle" translatable="yes">White has 32 pawns, Black has standard pieces. Black moves first</property>
                     <property name="use-underline">true</property>
                     <property name="activatable_widget">dunsany_switch</property>
                     <child>
@@ -113,11 +127,46 @@
                 <child>
                   <object class="AdwActionRow">
                     <property name="title" translatable="yes">_Cylinder Chess</property>
+                    <property name="subtitle" translatable="yes">Board edges wrap horizontally (a-file connects to h-file)</property>
                     <property name="use-underline">true</property>
                     <property name="activatable_widget">cylinder_switch</property>
                     <child>
                        <object class="GtkSwitch" id="cylinder_switch">
                         <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Table Punching vs AI</property>
+                    <property name="subtitle" translatable="yes">AI randomly scatters pieces when frustrated (chaos mode!)</property>
+                    <property name="use-underline">true</property>
+                    <property name="activatable_widget">table_punch_switch</property>
+                    <child>
+                       <object class="GtkSwitch" id="table_punch_switch">
+                        <property name="valign">center</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwActionRow">
+                    <property name="title" translatable="yes">_Punch Chance (%)</property>
+                    <property name="subtitle" translatable="yes">Probability of table punch occurring per move</property>
+                    <property name="use-underline">true</property>
+                    <property name="sensitive" bind-source="table_punch_switch" bind-property="active" bind-flags="default|sync-create" />
+                    <child>
+                      <object class="GtkSpinButton" id="table_punch_spin">
+                        <property name="valign">center</property>
+                        <property name="adjustment">
+                          <object class="GtkAdjustment">
+                            <property name="lower">1</property>
+                            <property name="step-increment">5</property>
+                            <property name="upper">100</property>
+                          </object>
+                        </property>
+                        <property name="value">10</property>
                       </object>
                     </child>
                   </object>

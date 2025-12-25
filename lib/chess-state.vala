@@ -939,13 +939,25 @@ public class ChessState : Object
     {
         /* Is in checkmate if no pieces can move */
         uint64 player_mask = piece_masks[player.color];
+        bool check_mask = !is_cylinder && !is_toroidal;
+
         for (int piece_index = 0; piece_index < 64; piece_index++)
         {
             if ((player_mask & BitBoard.set_location_masks[piece_index]) == 0)
                 continue;
 
+            uint64 move_mask = 0;
+            if (check_mask)
+            {
+                var piece = board[piece_index];
+                move_mask = BitBoard.move_masks[player.color * 64*6 + piece.type * 64 + piece_index];
+            }
+
             for (int end = 0; end < 64; end++)
             {
+                if (check_mask && (move_mask & BitBoard.set_location_masks[end]) == 0)
+                    continue;
+
                 if (move_with_index (player, piece_index, end, PieceType.QUEEN, false, true))
                     return false;
             }
@@ -970,6 +982,8 @@ public class ChessState : Object
          * Optimization: We return early on first valid move.
          */
         uint64 player_mask = piece_masks[player.color];
+        bool check_mask = !is_cylinder && !is_toroidal;
+
         for (int start = 0; start < 64; start++)
         {
             if ((player_mask & BitBoard.set_location_masks[start]) == 0)
@@ -977,9 +991,19 @@ public class ChessState : Object
 
             have_pieces = true;
 
+            uint64 move_mask = 0;
+            if (check_mask)
+            {
+                var piece = board[start];
+                move_mask = BitBoard.move_masks[player.color * 64*6 + piece.type * 64 + start];
+            }
+
             /* See if can move anywhere */
             for (int end = 0; end < 64; end++)
             {
+                if (check_mask && (move_mask & BitBoard.set_location_masks[end]) == 0)
+                    continue;
+
                 if (move_with_index (player, start, end, PieceType.QUEEN, false, true))
                     return true;
             }

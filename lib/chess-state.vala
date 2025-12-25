@@ -903,8 +903,12 @@ public class ChessState : Object
             /* See if any enemy pieces can take the king */
             int[] ranks = {};
             int[] files = {};
+            uint64 opponent_mask = piece_masks[opponent.color];
             for (int start = 0; start < 64; start++)
             {
+                if ((opponent_mask & BitBoard.set_location_masks[start]) == 0)
+                    continue;
+
                 if (move_with_index (opponent, start, king_index, PieceType.QUEEN, false, false))
                 {
                     ranks += get_rank (start);
@@ -934,16 +938,16 @@ public class ChessState : Object
     private bool is_in_checkmate (ChessPlayer player)
     {
         /* Is in checkmate if no pieces can move */
+        uint64 player_mask = piece_masks[player.color];
         for (int piece_index = 0; piece_index < 64; piece_index++)
         {
-            var p = board[piece_index];
-            if (p != null && p.player == player)
+            if ((player_mask & BitBoard.set_location_masks[piece_index]) == 0)
+                continue;
+
+            for (int end = 0; end < 64; end++)
             {
-                for (int end = 0; end < 64; end++)
-                {
-                    if (move_with_index (player, piece_index, end, PieceType.QUEEN, false, true))
-                        return false;
-                }
+                if (move_with_index (player, piece_index, end, PieceType.QUEEN, false, true))
+                    return false;
             }
         }
 
@@ -965,19 +969,19 @@ public class ChessState : Object
          * Total complexity can reach O(Pieces * 64 * Cost(move_check)).
          * Optimization: We return early on first valid move.
          */
+        uint64 player_mask = piece_masks[player.color];
         for (int start = 0; start < 64; start++)
         {
-            var p = board[start];
-            if (p != null && p.player == player)
-            {
-                have_pieces = true;
+            if ((player_mask & BitBoard.set_location_masks[start]) == 0)
+                continue;
 
-                /* See if can move anywhere */
-                for (int end = 0; end < 64; end++)
-                {
-                    if (move_with_index (player, start, end, PieceType.QUEEN, false, true))
-                        return true;
-                }
+            have_pieces = true;
+
+            /* See if can move anywhere */
+            for (int end = 0; end < 64; end++)
+            {
+                if (move_with_index (player, start, end, PieceType.QUEEN, false, true))
+                    return true;
             }
         }
 
@@ -1548,7 +1552,7 @@ public class ChessState : Object
         int r = get_rank (start);
         int f = get_file (start);
 
-        int steps = dr.abs().max(df.abs());
+        int steps = int.max (dr.abs(), df.abs());
         int step_r = dr == 0 ? 0 : (dr > 0 ? 1 : -1);
         int step_f = df == 0 ? 0 : (df > 0 ? 1 : -1);
 

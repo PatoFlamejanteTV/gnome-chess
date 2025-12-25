@@ -536,6 +536,11 @@ public class PGN : Object
 
     public PGN.from_file (File file) throws Error
     {
+        var info = file.query_info (FileAttribute.STANDARD_SIZE, FileQueryInfoFlags.NONE);
+        /* Limit to 10MB to prevent memory exhaustion and O(N^2) parsing complexity */
+        if (info.get_size () > 10 * 1024 * 1024)
+            throw new PGNError.LOAD_ERROR ("File too large");
+
         uint8[] contents;
         file.load_contents (null, out contents, null);
         this.from_string ((string) contents);

@@ -61,6 +61,52 @@ class GNOMEChess
         }
     }
 
+    private static void test_pgn_large_file ()
+    {
+        test_count++;
+
+        /* Create a large file > 10MB */
+        var filename = "large.pgn";
+        var file = File.new_for_path (filename);
+        try
+        {
+            var stream = file.create (FileCreateFlags.REPLACE_DESTINATION);
+            var data_stream = new DataOutputStream (stream);
+
+            /* Write 10MB + 1KB of data */
+            var chunk = string.nfill (1024, ' ');
+            for (int i = 0; i < 10241; i++)
+            {
+                data_stream.put_string (chunk);
+            }
+            data_stream.close ();
+
+            new PGN.from_file (file);
+            stderr.printf ("%d. FAIL expected load error (File too large) but succeeded\n", test_count);
+            failure_count++;
+        }
+        catch (PGNError e)
+        {
+            if (e.message == "File too large")
+                stderr.printf ("%d. PASS\n", test_count);
+            else
+            {
+                stderr.printf ("%d. FAIL got error '%s', expected 'File too large'\n", test_count, e.message);
+                failure_count++;
+            }
+        }
+        catch (Error e)
+        {
+            stderr.printf ("%d. FAIL got error '%s', expected PGNError.LOAD_ERROR\n", test_count, e.message);
+            failure_count++;
+        }
+
+        // Cleanup
+        try {
+            file.delete ();
+        } catch (Error e) {}
+    }
+
     public static int main (string[] args)
     {
         /* Simple file in export format */
@@ -129,6 +175,9 @@ class GNOMEChess
 
         /* Compact format (no spaces) */
         test_pgn_file ("1.e4", "e4");
+
+        /* Test large file DoS protection */
+        test_pgn_large_file ();
 
         stdout.printf ("%d/%d tests successful\n", test_count - failure_count, test_count);
 
